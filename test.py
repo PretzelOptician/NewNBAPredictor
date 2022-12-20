@@ -33,7 +33,7 @@ def get_abbrv(team, year):
     elif team == 'Brooklyn': return 'BRK'
     elif team == 'Washington': return 'WAS'
     elif team == 'Miami': return 'MIA'
-    elif team == 'NewYork': return 'NYK'
+    elif team == 'NewYork' or team == 'New York': return 'NYK'
     elif team == 'Indiana': return 'IND'
     elif team == 'Detroit': return 'DET'
     elif team == 'OklahomaCity' or team == 'Oklahoma City': return 'OKC'
@@ -92,16 +92,19 @@ team_name_mapping = {
 # Initialize an empty dictionary to store the dataframes
 game_logs = {}
 
-print(get_game_log("Cleveland", 2017))
+print(get_game_log("Minnesota", 2020))
 
 # Iterate over the list of teams and the range of years
-for team in team_names:
-    for year in range(2014, 2022):
-        # Use the get_game_log function to retrieve the dataframe for the current team and year
-        df = get_game_log(team, year)
-        # Add the dataframe to the dictionary with the key (team, year)
-        game_logs[(team, year)] = df
-        print("Generated game log for " + team + " in " + str(year) + "...")
+# for team in team_names:
+#     for year in range(2014, 2022):
+#         # Use the get_game_log function to retrieve the dataframe for the current team and year
+#         try: 
+#             df = get_game_log(team, year)
+#             # Add the dataframe to the dictionary with the key (team, year)
+#             game_logs[(team, year)] = df
+#             print("Generated game log for " + team + " in " + str(year) + "...")
+#         except: 
+#             print("ERROR GENERATING TABLE FOR TEAM " + team + " IN YEAR " + str(year) + ".")
 
 team1 = "New York"
 print(game_logs[(team_name_mapping.get(team1, team1), year)])
