@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import requests
 
 ROW_START = 100
-ROW_PLAYOFFS = 100
+ROW_PLAYOFFS = 0
 
 def get_avg_followers(team): 
     if team == 'LALakers' or team == 'LA Lakers': return 52321433
@@ -150,7 +150,7 @@ game_logs = {}
 
 # Iterate over the list of teams and the range of years
 for team in team_names:
-    for year in range(2014, 2022):
+    for year in range(2014, 2023):
         # Use the get_game_log function to retrieve the dataframe for the current team and year
         df = get_game_log_excel(team, year)
         # Add the dataframe to the dictionary with the key (team, year)
@@ -190,21 +190,21 @@ for yearOffset in range(9):
             final_score = data.at[row, 'Final'] + data.at[row-1, 'Final']
             hitOver = final_score > total
             push = final_score == total
-            homeppg = 0
-            gamesPlayed = 0
-            for row2 in range(row-1): 
-                if data.at[row2, 'Team'] == team1: 
-                    homeppg+= data.at[row2, 'Final']
-                    gamesPlayed += 1
-            homeppg /= (gamesPlayed if gamesPlayed>0 else 1)
-            awayppg = 0
-            gamesPlayed = 0
-            for row2 in range(row-1): 
-                if data.at[row2, 'Team'] == team2: 
-                    awayppg+= data.at[row2, 'Final']
-                    gamesPlayed += 1
-            awayppg /= (gamesPlayed if gamesPlayed>0 else 1)
-            totalppg = homeppg + awayppg
+            # homeppg = 0
+            # gamesPlayed = 0
+            # for row2 in range(row-1): 
+            #     if data.at[row2, 'Team'] == team1: 
+            #         homeppg+= data.at[row2, 'Final']
+            #         gamesPlayed += 1
+            # homeppg /= (gamesPlayed if gamesPlayed>0 else 1)
+            # awayppg = 0
+            # gamesPlayed = 0
+            # for row2 in range(row-1): 
+            #     if data.at[row2, 'Team'] == team2: 
+            #         awayppg+= data.at[row2, 'Final']
+            #         gamesPlayed += 1
+            # awayppg /= (gamesPlayed if gamesPlayed>0 else 1)
+            # totalppg = homeppg + awayppg
             avg_followers = (get_avg_followers(team2) + get_avg_followers(team1))/2
             
             # advanced stats
@@ -232,6 +232,8 @@ for yearOffset in range(9):
             pace2 = 0
             ftperfga1 = 0
             ftperfga2 = 0
+            ppg1 = 0
+            ppg2 = 0
 
             game_log_1 = game_logs[(team_name_mapping.get(team1, team1), year)]
             game_log_2 = game_logs[(team_name_mapping.get(team2, team2), year)]
@@ -242,79 +244,86 @@ for yearOffset in range(9):
                     games_played_team_one += 1
                 elif data.at[row2, 'Team'] == team2: 
                     games_played_team_two += 1
-            for game_number in range(games_played_team_one): 
-                pace1 += game_log_1.at[game_number, 'Pace']
-                pace1 /= games_played_team_one
-                ortg1 += game_log_1.at[game_number, 'ORtg']
-                ortg1 /= games_played_team_one
-                drtg1 += game_log_1.at[game_number, 'DRtg']
-                drtg1 /= games_played_team_one
-                drb1 += game_log_1.at[game_number, 'DRB%']
-                drb1 /= games_played_team_one
-                threePAR1 += game_log_1.at[game_number, '3PAr']
-                threePAR1 /= games_played_team_one
-                ts1 += game_log_1.at[game_number, 'TS%']
-                ts1 /= games_played_team_one
-                ftr1 += game_log_1.at[game_number, 'FTr']
-                ftr1 /= games_played_team_one
-                ## TEST COLUMN NAMES
-                d_tov1 += game_log_1.at[game_number, 'TOV%.0']
-                d_tov1 /= games_played_team_one
-                o_tov1 += game_log_1.at[game_number, 'TOV%.1']
-                o_tov1 /= games_played_team_one
-                ftperfga1 += (game_log_1.at[game_number, 'FT/FGA.0'] + game_log_1.at[game_number, 'FT/FGA.1'])/2
-                ftperfga1 /= games_played_team_one
+            if not (((games_played_team_one > 81 or games_played_team_two > 81)) or (year == 2020 and (games_played_team_one > 63 or games_played_team_two > 63)) or (year == 2021 and (games_played_team_one > 71 or games_played_team_two > 71))): 
+                for game_number in range(games_played_team_one): 
+                    pace1 += game_log_1.at[game_number, 'Pace']
+                    ortg1 += game_log_1.at[game_number, 'ORtg']
+                    drtg1 += game_log_1.at[game_number, 'DRtg']
+                    drb1 += game_log_1.at[game_number, 'DRB%']
+                    threePAR1 += game_log_1.at[game_number, '3PAr']
+                    ts1 += game_log_1.at[game_number, 'TS%']
+                    ftr1 += game_log_1.at[game_number, 'FTr']
+                    d_tov1 += game_log_1.at[game_number, 'TOV%_1']
+                    o_tov1 += game_log_1.at[game_number, 'TOV%_2']
+                    ftperfga1 += (game_log_1.at[game_number, 'FT/FGA_1'] + game_log_1.at[game_number, 'FT/FGA_2'])/2
+                    ppg1 += game_log_1.at[game_number, 'Tm']
 
+                if games_played_team_one > 0: 
+                    pace1 /= games_played_team_one
+                    ortg1 /= games_played_team_one
+                    drtg1 /= games_played_team_one
+                    drb1 /= games_played_team_one
+                    threePAR1 /= games_played_team_one
+                    ts1 /= games_played_team_one
+                    ftr1 /= games_played_team_one
+                    d_tov1 /= games_played_team_one
+                    o_tov1 /= games_played_team_one
+                    ftperfga1 /= games_played_team_one
+                    ppg1 /= games_played_team_one
 
-            for game_number in range(games_played_team_two): 
-                pace2 += game_log_2.at[game_number, 'Pace']
-                pace2 /= games_played_team_two
-                ortg2 += game_log_2.at[game_number, 'ORtg']
-                ortg2 /= games_played_team_two
-                drtg2 += game_log_2.at[game_number, 'DRtg']
-                drtg2 /= games_played_team_two
-                drb2 += game_log_2.at[game_number, 'DRB%']
-                drb2 /= games_played_team_two
-                threePAR2 += game_log_2.at[game_number, '3PAr']
-                threePAR2 /= games_played_team_two
-                ts2 += game_log_2.at[game_number, 'TS%']
-                ts2 /= games_played_team_two
-                ftr2 += game_log_2.at[game_number, 'FTr']
-                ftr2 /= games_played_team_two
-                ## TEST COLUMN NAMES
-                d_tov2 += game_log_2.at[game_number, 'TOV%.0']
-                d_tov2 /= games_played_team_two
-                o_tov2 += game_log_2.at[game_number, 'TOV%.1']
-                o_tov2 /= games_played_team_two
-                ftperfga2 += (game_log_2.at[game_number, 'FT/FGA.0'] + game_log_1.at[game_number, 'FT/FGA.1'])/2
-                ftperfga2 /= games_played_team_two
+                for game_number in range(games_played_team_two): 
+                    pace2 += game_log_2.at[game_number, 'Pace']
+                    ortg2 += game_log_2.at[game_number, 'ORtg']
+                    drtg2 += game_log_2.at[game_number, 'DRtg']
+                    drb2 += game_log_2.at[game_number, 'DRB%']
+                    threePAR2 += game_log_2.at[game_number, '3PAr']
+                    ts2 += game_log_2.at[game_number, 'TS%']
+                    ftr2 += game_log_2.at[game_number, 'FTr']
+                    d_tov2 += game_log_2.at[game_number, 'TOV%_1']
+                    o_tov2 += game_log_2.at[game_number, 'TOV%_2']
+                    ftperfga2 += (game_log_2.at[game_number, 'FT/FGA_1'] + game_log_1.at[game_number, 'FT/FGA_2'])/2
+                    ppg2 += game_log_2.at[game_number, 'Tm']
+                
+                if games_played_team_two > 0: 
+                    ftperfga2 /= games_played_team_two
+                    o_tov2 /= games_played_team_two
+                    d_tov2 /= games_played_team_two
+                    ftr2 /= games_played_team_two
+                    ts2 /= games_played_team_two
+                    threePAR2 /= games_played_team_two
+                    drb2 /= games_played_team_two
+                    drtg2 /= games_played_team_two
+                    ortg2 /= games_played_team_two
+                    pace2 /= games_played_team_two
+                    ppg2 /= games_played_team_two
 
-            pace = (pace1 + pace2)/2
-            ortg = (ortg1 + ortg2)/2
-            drtg = (drtg1 + drtg2)/2
-            drb = (drb1 + drb2)/2
-            threePAR = (threePAR1 + threePAR2)/2
-            ts = (ts1 + ts2)/2
-            ftr = (ftr1 + ftr2)/2
-            d_tov = (d_tov1 + d_tov2)/2
-            o_tov = (o_tov1 + o_tov2)/2
-            ftperfga = (ftperfga1 + ftperfga2)/2
+                pace = (pace1 + pace2)/2
+                ortg = (ortg1 + ortg2)/2
+                drtg = (drtg1 + drtg2)/2
+                drb = (drb1 + drb2)/2
+                threePAR = (threePAR1 + threePAR2)/2
+                ts = (ts1 + ts2)/2
+                ftr = (ftr1 + ftr2)/2
+                d_tov = (d_tov1 + d_tov2)/2
+                o_tov = (o_tov1 + o_tov2)/2
+                ftperfga = (ftperfga1 + ftperfga2)/2
+                totalppg = (ppg1 + ppg2)/2
 
-            pace /= (games_played_team_one + games_played_team_two)
-            ortg /= (games_played_team_one + games_played_team_two)
-            drtg /= (games_played_team_one + games_played_team_two)
-            drb /= (games_played_team_one + games_played_team_two)
-            threePAR /= (games_played_team_one + games_played_team_two)
-            ts /= (games_played_team_one + games_played_team_two)
-            ftr /= (games_played_team_one + games_played_team_two)
-            d_tov /= (games_played_team_one + games_played_team_two)
-            o_tov /= (games_played_team_one + games_played_team_two)
-            ftperfga /= (games_played_team_one + games_played_team_two)
+                # pace /= (games_played_team_one + games_played_team_two)
+                # ortg /= (games_played_team_one + games_played_team_two)
+                # drtg /= (games_played_team_one + games_played_team_two)
+                # drb /= (games_played_team_one + games_played_team_two)
+                # threePAR /= (games_played_team_one + games_played_team_two)
+                # ts /= (games_played_team_one + games_played_team_two)
+                # ftr /= (games_played_team_one + games_played_team_two)
+                # d_tov /= (games_played_team_one + games_played_team_two)
+                # o_tov /= (games_played_team_one + games_played_team_two)
+                # ftperfga /= (games_played_team_one + games_played_team_two)
 
-            if not push: 
-                new_data.loc[len(new_data.index)] = [year, (1 if hitOver else 0), total, avg_followers, totalppg, size_of_spread, team1, team2, None, pace, ortg, drtg, drb, threePAR, ts, ftr, d_tov, o_tov, ftperfga]
+                if not push: 
+                    new_data.loc[len(new_data.index)] = [year, (1 if hitOver else 0), total, avg_followers, totalppg, size_of_spread, team1, team2, None, pace, ortg, drtg, drb, threePAR, ts, ftr, d_tov, o_tov, ftperfga]
 
-            print("Data for " + team1 + " vs " + team2 + " in " + str(year))
+                print("Data for " + team1 + " vs " + team2 + " in " + str(year))
     print("gathering over percentage data for year " + str(year))
     for row in range(new_data.shape[0]): 
         if row > ROW_START: 
@@ -331,7 +340,7 @@ for yearOffset in range(9):
             pct_overs_hit = float(oversHit)/float(totalGames)
             new_data.at[row, 'pct_overs_hit'] = pct_overs_hit
     #new_test_data = new_data.iloc[(ROW_START+1):-ROW_PLAYOFFS]
-    total_data = pd.concat([total_data, new_data.iloc[(ROW_START+1):-ROW_PLAYOFFS]], ignore_index=True)
+    total_data = pd.concat([total_data, new_data.iloc[(ROW_START+1):]], ignore_index=True)
     
 print(total_data)
 total_data.to_excel("probit_data.xlsx")
