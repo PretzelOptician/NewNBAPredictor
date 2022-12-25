@@ -1,9 +1,28 @@
 import pandas as pd
 from bs4 import BeautifulSoup
 import requests
+import math
 
-ROW_START = 100
+ROW_START = 150
 ROW_PLAYOFFS = 0
+
+#chatGPT generated function
+def calc_std_dev(numbers):
+  # Return 0 if the input list is empty
+  if not numbers:
+    return 0
+
+  # Calculate the mean of the numbers
+  mean = sum(numbers) / len(numbers)
+
+  # Calculate the variance of the numbers
+  variance = sum((x - mean) ** 2 for x in numbers) / len(numbers)
+
+  # Calculate the standard deviation from the variance
+  std_dev = math.sqrt(variance)
+
+  return std_dev
+
 
 def get_avg_followers(team): 
     if team == 'LALakers' or team == 'LA Lakers': return 52321433
@@ -131,7 +150,7 @@ def get_game_log_excel(team, year):
     return df
 
 pd.set_option('display.max_rows', None)
-total_data = pd.DataFrame({'year': [], 'hitOver': [], 'total': [], 'avg_popularity': [], 'totalppg': [], 'size_of_spread': [], 'home_team': [], 'away_team': [], 'pct_overs_hit': [], 'pace': [], 'ortg': [], 'drtg': [], 'drb': [], 'threePAR': [], 'ts': [], 'ftr': [], 'd_tov': [], 'o_tov': [], 'ftperfga': []})
+total_data = pd.DataFrame({'year': [], 'hitOver': [], 'total': [], 'avg_popularity': [], 'totalppg': [], 'size_of_spread': [], 'home_team': [], 'away_team': [], 'pct_overs_hit': [], 'pace': [], 'ortg': [], 'drtg': [], 'drb': [], 'threePAR': [], 'ts': [], 'ftr': [], 'd_tov': [], 'o_tov': [], 'ftperfga': [], 'points_over_average_ratio': [], 'hotness_ratio': [], 'std_dev': []})
 
 team_names = [ "Atlanta", "Boston", "Brooklyn", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"]
 
@@ -168,46 +187,34 @@ for yearOffset in range(9):
     leagueData = leagueData.drop(['Unnamed: 0_level_0'], axis=1)
 
     data = pd.read_excel('../NBA-Spreadsheets/' + str(year) + '/oddsStats.xlsx')
-    new_data = pd.DataFrame({'year': [], 'hitOver': [], 'total': [], 'avg_popularity': [], 'totalppg': [], 'size_of_spread': [], 'home_team': [], 'away_team': [], 'pct_overs_hit': [], 'pace': [], 'ortg': [], 'drtg': [], 'drb': [], 'threePAR': [], 'ts': [], 'ftr': [], 'd_tov': [], 'o_tov': [], 'ftperfga': []})
+    new_data = pd.DataFrame({'year': [], 'hitOver': [], 'total': [], 'avg_popularity': [], 'totalppg': [], 'size_of_spread': [], 'home_team': [], 'away_team': [], 'pct_overs_hit': [], 'pace': [], 'ortg': [], 'drtg': [], 'drb': [], 'threePAR': [], 'ts': [], 'ftr': [], 'd_tov': [], 'o_tov': [], 'ftperfga': [], 'points_over_average_ratio': [], 'hotness_ratio': [], 'std_dev': []})
     for row in range(data.shape[0]): 
         if row%2==1: 
+
+            # phase 1 factors: basic numbers
+
             team1 = data.at[row, 'Team']
             team2 = data.at[row-1, 'Team']
-            print('for: ' + team1 + ' vs ' + team2)
+            # print('for: ' + team1 + ' vs ' + team2)
             if data.at[row, 'Close']!='pk' and data.at[row, 'Close']>=100:
                 #is the total
                 total = data.at[row, 'Close']
-                if data.at[row-1, 'Close'] != 'pk': 
+                if data.at[row-1, 'Close'] != 'pk' and data.at[row-1, 'Close'] != 'PK': 
                     size_of_spread = data.at[row-1, 'Close']
                 else: 
                     size_of_spread = 0
             else: 
                 total = data.at[row-1, 'Close']
-                if data.at[row, 'Close'] != 'pk': 
+                if data.at[row, 'Close'] != 'pk' and data.at[row, 'Close'] != 'PK': 
                     size_of_spread = data.at[row, 'Close']
                 else: 
                     size_of_spread = 0
             final_score = data.at[row, 'Final'] + data.at[row-1, 'Final']
             hitOver = final_score > total
             push = final_score == total
-            # homeppg = 0
-            # gamesPlayed = 0
-            # for row2 in range(row-1): 
-            #     if data.at[row2, 'Team'] == team1: 
-            #         homeppg+= data.at[row2, 'Final']
-            #         gamesPlayed += 1
-            # homeppg /= (gamesPlayed if gamesPlayed>0 else 1)
-            # awayppg = 0
-            # gamesPlayed = 0
-            # for row2 in range(row-1): 
-            #     if data.at[row2, 'Team'] == team2: 
-            #         awayppg+= data.at[row2, 'Final']
-            #         gamesPlayed += 1
-            # awayppg /= (gamesPlayed if gamesPlayed>0 else 1)
-            # totalppg = homeppg + awayppg
             avg_followers = (get_avg_followers(team2) + get_avg_followers(team1))/2
             
-            # advanced stats
+            # phase 2 factors: advanced stats
 
             game_log_1 = game_logs[(team_name_mapping.get(team1, team1), year)]
             game_log_2 = game_logs[(team_name_mapping.get(team2, team2), year)]
@@ -245,6 +252,8 @@ for yearOffset in range(9):
                 elif data.at[row2, 'Team'] == team2: 
                     games_played_team_two += 1
             if not (((games_played_team_one > 81 or games_played_team_two > 81)) or (year == 2020 and (games_played_team_one > 63 or games_played_team_two > 63)) or (year == 2021 and (games_played_team_one > 71 or games_played_team_two > 71))): 
+                
+                points1 = []
                 for game_number in range(games_played_team_one): 
                     pace1 += game_log_1.at[game_number, 'Pace']
                     ortg1 += game_log_1.at[game_number, 'ORtg']
@@ -256,7 +265,9 @@ for yearOffset in range(9):
                     d_tov1 += game_log_1.at[game_number, 'TOV%_1']
                     o_tov1 += game_log_1.at[game_number, 'TOV%_2']
                     ftperfga1 += (game_log_1.at[game_number, 'FT/FGA_1'] + game_log_1.at[game_number, 'FT/FGA_2'])/2
-                    ppg1 += game_log_1.at[game_number, 'Tm']
+                    points1.append(game_log_1.at[game_number, 'Tm'])
+                for game in points1: 
+                    ppg1 += game
 
                 if games_played_team_one > 0: 
                     pace1 /= games_played_team_one
@@ -271,6 +282,7 @@ for yearOffset in range(9):
                     ftperfga1 /= games_played_team_one
                     ppg1 /= games_played_team_one
 
+                points2 = []
                 for game_number in range(games_played_team_two): 
                     pace2 += game_log_2.at[game_number, 'Pace']
                     ortg2 += game_log_2.at[game_number, 'ORtg']
@@ -282,7 +294,9 @@ for yearOffset in range(9):
                     d_tov2 += game_log_2.at[game_number, 'TOV%_1']
                     o_tov2 += game_log_2.at[game_number, 'TOV%_2']
                     ftperfga2 += (game_log_2.at[game_number, 'FT/FGA_1'] + game_log_1.at[game_number, 'FT/FGA_2'])/2
-                    ppg2 += game_log_2.at[game_number, 'Tm']
+                    points2.append(game_log_2.at[game_number, 'Tm'])
+                for game in points2: 
+                    ppg2 += game
                 
                 if games_played_team_two > 0: 
                     ftperfga2 /= games_played_team_two
@@ -309,21 +323,57 @@ for yearOffset in range(9):
                 ftperfga = (ftperfga1 + ftperfga2)/2
                 totalppg = (ppg1 + ppg2)/2
 
-                # pace /= (games_played_team_one + games_played_team_two)
-                # ortg /= (games_played_team_one + games_played_team_two)
-                # drtg /= (games_played_team_one + games_played_team_two)
-                # drb /= (games_played_team_one + games_played_team_two)
-                # threePAR /= (games_played_team_one + games_played_team_two)
-                # ts /= (games_played_team_one + games_played_team_two)
-                # ftr /= (games_played_team_one + games_played_team_two)
-                # d_tov /= (games_played_team_one + games_played_team_two)
-                # o_tov /= (games_played_team_one + games_played_team_two)
-                # ftperfga /= (games_played_team_one + games_played_team_two)
+                ##phase 3 factors
 
-                if not push: 
-                    new_data.loc[len(new_data.index)] = [year, (1 if hitOver else 0), total, avg_followers, totalppg, size_of_spread, team1, team2, None, pace, ortg, drtg, drb, threePAR, ts, ftr, d_tov, o_tov, ftperfga]
+                #points over average
+                total_league_scoring = 0
+                games_played = 0
+                for row2 in range(row-1): 
+                    if data.at[row2, 'Date'] != data.at[row, 'Date']: 
+                        games_played += 1
+                        total_league_scoring += data.at[row2, 'Final']
+                league_scoring_average = 0
+                points_over_average_ratio = 0
+                if total_league_scoring > 0: 
+                    league_scoring_average = total_league_scoring / games_played
+                    points_over_average_ratio = totalppg / league_scoring_average
 
-                print("Data for " + team1 + " vs " + team2 + " in " + str(year))
+                #hotness factor
+                recent_ppg1 = 0
+                for game in range(len(points1)-3, len(points1)): #team 1
+                    if game < 0: 
+                        game = 0
+                    if game < len(points1): 
+                        recent_ppg1 += points1[game]
+                recent_ppg1 /= 3
+                recent_ppg2 = 0
+                for game in range(len(points2)-3, len(points2)): #team 2
+                    if game < 0: 
+                        game = 0
+                    if game < len(points2): 
+                        recent_ppg2 += points2[game]
+                recent_ppg2 /= 3
+                hotness_ratio1 = 1
+                if ppg1 > 0: 
+                    hotness_ratio1 = recent_ppg1/ppg1
+                hotness_ratio2 = 1
+                if ppg2 > 0: 
+                    hotness_ratio2 = recent_ppg2/ppg2
+                hotness_ratio = (hotness_ratio1 + hotness_ratio2)/2
+
+                #standard deviation of points
+                std_dev1 = calc_std_dev(points1)
+                std_dev2 = calc_std_dev(points2)
+                std_dev = (std_dev1 + std_dev2)/2
+
+                # debugging
+                outlier = (team1 == "Brooklyn" and team2 == "Oklahoma City" and year == 2016) or (team1 == "Toronto" and team2 == "LA Clippers" and year == 2016)
+
+                #push
+                if not push and not outlier: 
+                    new_data.loc[len(new_data.index)] = [year, (1 if hitOver else 0), total, avg_followers, totalppg, size_of_spread, team1, team2, None, pace, ortg, drtg, drb, threePAR, ts, ftr, d_tov, o_tov, ftperfga, points_over_average_ratio, hotness_ratio, std_dev]
+
+                # print("Data for " + team1 + " vs " + team2 + " in " + str(year))
     print("gathering over percentage data for year " + str(year))
     for row in range(new_data.shape[0]): 
         if row > ROW_START: 
@@ -339,7 +389,6 @@ for yearOffset in range(9):
                     oversHit += new_data.at[row2, 'hitOver']
             pct_overs_hit = float(oversHit)/float(totalGames)
             new_data.at[row, 'pct_overs_hit'] = pct_overs_hit
-    #new_test_data = new_data.iloc[(ROW_START+1):-ROW_PLAYOFFS]
     total_data = pd.concat([total_data, new_data.iloc[(ROW_START+1):]], ignore_index=True)
     
 print(total_data)
