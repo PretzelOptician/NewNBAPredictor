@@ -13,5 +13,5 @@ count if over_prob < 0.47 & hitOver == 0
 display 630/1155
 encode home_team, generate(home_s)
 encode away_team, generate(away_s)
-logit hitOver total avg_popularity totalppg size_of_spread pct_overs_hit pace drtg threePAR ts ftr ftperfga points_over_average_ratio hotness_ratio std_dev i.home_s i.away_s
+logit hitOver size_of_spread pct_overs_hit drtg threePAR ts ftr ftperfga points_over_average_ratio hotness_ratio std_dev i.home_s i.away_s
 estat classification

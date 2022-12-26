@@ -57,7 +57,7 @@ def get_avg_followers(team):
     elif team == 'Dallas': return 10535695
 
 # convert team name to the name used in the league stats sheet. note that it only returns the first word as this is the name used to parse the spreadsheet
-def convert_team_name(team): 
+def convert_team_name(team, year): 
     if team == 'LALakers' or team == 'LA Lakers': return 'Los Angeles Lakers'
     elif team == 'Cleveland': return 'Cleveland Cavaliers'
     elif team == 'Boston': return 'Boston Celtics'
@@ -86,7 +86,9 @@ def convert_team_name(team):
     elif team == 'NewOrleans' or team == 'New Orleans': return 'New Orleans Pelicans'
     elif team == 'GoldenState' or team == 'Golden State': return 'Golden State Warriors'
     elif team == 'LAClippers' or team == 'LA Clippers': return 'Los Angeles Clippers'
-    elif team == 'Charlotte': return 'Charlotte Hornets'
+    elif team == 'Charlotte': 
+        if year < 2015: return 'Charlotte Bobcats'
+        else: return 'Charlotte Hornets'
     elif team == 'Dallas': return 'Dallas Mavericks'
 
 def get_abbrv(team, year): 
@@ -149,8 +151,18 @@ def get_game_log_excel(team, year):
     df = pd.read_excel(filepath)
     return df
 
+def get_rsw_odds_excel(year): 
+    filepath = f'./rswOdds/{year}.xlsx'
+    df = pd.read_excel(filepath)
+    return df
+
+def get_ratings(year): 
+    filepath = f'./ratings/{year}.xlsx'
+    df = pd.read_excel(filepath)
+    return df
+
 pd.set_option('display.max_rows', None)
-total_data = pd.DataFrame({'year': [], 'hitOver': [], 'total': [], 'avg_popularity': [], 'totalppg': [], 'size_of_spread': [], 'home_team': [], 'away_team': [], 'pct_overs_hit': [], 'pace': [], 'ortg': [], 'drtg': [], 'drb': [], 'threePAR': [], 'ts': [], 'ftr': [], 'd_tov': [], 'o_tov': [], 'ftperfga': [], 'points_over_average_ratio': [], 'hotness_ratio': [], 'std_dev': []})
+total_data = pd.DataFrame({'year': [], 'hitOver': [], 'total': [], 'avg_popularity': [], 'totalppg': [], 'size_of_spread': [], 'home_team': [], 'away_team': [], 'pct_overs_hit': [], 'pace': [], 'ortg': [], 'drtg': [], 'drb': [], 'threePAR': [], 'ts': [], 'ftr': [], 'd_tov': [], 'o_tov': [], 'ftperfga': [], 'points_over_average_ratio': [], 'hotness_ratio': [], 'std_dev': [], 'win_pct': [], 'rsw': [], 'ratings_2k': []})
 
 team_names = [ "Atlanta", "Boston", "Brooklyn", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"]
 
@@ -176,18 +188,30 @@ for team in team_names:
         game_logs[(team, year)] = df
         print("Generated game log for " + team + " in " + str(year) + "...")
 
+rsw_odds = {}
+for year in range(2014, 2023): 
+    df = get_rsw_odds_excel(year)
+    rsw_odds[year] = df
+    print("Generated pre-season odds for year " + str(year) + "...")
+
+ratings = {}
+for year in range(2014, 2023): 
+    df = get_ratings(year)
+    ratings[year] = df
+    print("Generated ratings for year " + str(year) + "...")
+
 for yearOffset in range(9):
     year = 2014+yearOffset
 
-    api_url = "https://widgets.sports-reference.com/wg.fcgi?css=1&site=bbr&url=%2Fleagues%2FNBA_" + str(year-1) + ".html&div=div_advanced-team"
-    response = requests.get(api_url) 
-    soup = BeautifulSoup(response.content, 'html.parser')
-    table = soup.find('table')
-    leagueData = pd.read_html(str(table))[0]
-    leagueData = leagueData.drop(['Unnamed: 0_level_0'], axis=1)
+    # api_url = "https://widgets.sports-reference.com/wg.fcgi?css=1&site=bbr&url=%2Fleagues%2FNBA_" + str(year-1) + ".html&div=div_advanced-team"
+    # response = requests.get(api_url) 
+    # soup = BeautifulSoup(response.content, 'html.parser')
+    # table = soup.find('table')
+    # leagueData = pd.read_html(str(table))[0]
+    # leagueData = leagueData.drop(['Unnamed: 0_level_0'], axis=1)
 
     data = pd.read_excel('../NBA-Spreadsheets/' + str(year) + '/oddsStats.xlsx')
-    new_data = pd.DataFrame({'year': [], 'hitOver': [], 'total': [], 'avg_popularity': [], 'totalppg': [], 'size_of_spread': [], 'home_team': [], 'away_team': [], 'pct_overs_hit': [], 'pace': [], 'ortg': [], 'drtg': [], 'drb': [], 'threePAR': [], 'ts': [], 'ftr': [], 'd_tov': [], 'o_tov': [], 'ftperfga': [], 'points_over_average_ratio': [], 'hotness_ratio': [], 'std_dev': []})
+    new_data = pd.DataFrame({'year': [], 'hitOver': [], 'total': [], 'avg_popularity': [], 'totalppg': [], 'size_of_spread': [], 'home_team': [], 'away_team': [], 'pct_overs_hit': [], 'pace': [], 'ortg': [], 'drtg': [], 'drb': [], 'threePAR': [], 'ts': [], 'ftr': [], 'd_tov': [], 'o_tov': [], 'ftperfga': [], 'points_over_average_ratio': [], 'hotness_ratio': [], 'std_dev': [], 'win_pct': [], 'rsw': [], 'ratings_2k': []})
     for row in range(data.shape[0]): 
         if row%2==1: 
 
@@ -366,12 +390,75 @@ for yearOffset in range(9):
                 std_dev2 = calc_std_dev(points2)
                 std_dev = (std_dev1 + std_dev2)/2
 
+                #phase 4 factors
+                
+                #winning percentage
+                wins1 = 0
+                wins2 = 0
+                games1 = 0
+                games2 = 0
+                for row2 in range(row-1): 
+                    if data.at[row2, 'Team'] == team1: 
+                        games1 += 1
+                        if row2%2 == 1: #row-1 is the other team
+                            if data.at[row2, 'Final'] > data.at[row2-1, 'Final']: 
+                                wins1 += 1
+                        else: #row+1 is the other team
+                            if data.at[row2, 'Final'] > data.at[row2+1, 'Final']: 
+                                wins1 += 1
+                    elif data.at[row2, 'Team'] == team2: 
+                        games2 += 1
+                        if row2%2 == 1: #row-1 is the other team
+                            if data.at[row2, 'Final'] > data.at[row2-1, 'Final']: 
+                                wins2 += 1
+                        else: #row+1 is the other team
+                            if data.at[row2, 'Final'] > data.at[row2+1, 'Final']: 
+                                wins2 += 1
+                if games1 == 0: 
+                    win_pct1 = 0
+                else: 
+                    win_pct1 = wins1/games1
+                if games2 == 0: 
+                    win_pct2 = 0
+                else: 
+                    win_pct2 = wins2/games2
+                win_pct = (win_pct1 + win_pct2)/2
+
+                #rsw
+                preseason_odds = rsw_odds[year]
+                rsw1 = 0
+                rsw2 = 0
+                for team in range(preseason_odds.shape[0]): 
+                    if preseason_odds.at[team, 'Team'] == convert_team_name(team1, year): 
+                        rsw1 = preseason_odds.at[team, 'W-L O/U']
+                    elif preseason_odds.at[team, 'Team'] == convert_team_name(team2, year): 
+                        rsw2 = preseason_odds.at[team, 'W-L O/U']
+                rsw = (rsw1+rsw2)/2
+
+                #2k ratings
+                ratings_for_year = ratings[year]
+                rating1 = 0
+                rating2 = 0
+                col_name = f"{str(year-1)}/{str(year)[2:4]}"
+                team1name = convert_team_name(team1, year)
+                team2name = convert_team_name(team2, year)
+                if team1name == 'Charlotte Bobcats':
+                    team1name = 'Charlotte Hornets'
+                elif team2name == 'Charlotte Bobcats': 
+                    team2name = 'Charlotte Hornets'
+                for team in range(ratings_for_year.shape[0]): 
+                    if ratings_for_year.at[team, 'Team'] == team1name: 
+                        rating1 = ratings_for_year.at[team, col_name]
+                    elif ratings_for_year.at[team, 'Team'] == team2name: 
+                        rating2 = ratings_for_year.at[team, col_name]
+                rating = (rating1 + rating2)/2
+
                 # debugging
                 outlier = (team1 == "Brooklyn" and team2 == "Oklahoma City" and year == 2016) or (team1 == "Toronto" and team2 == "LA Clippers" and year == 2016)
 
                 #push
                 if not push and not outlier: 
-                    new_data.loc[len(new_data.index)] = [year, (1 if hitOver else 0), total, avg_followers, totalppg, size_of_spread, team1, team2, None, pace, ortg, drtg, drb, threePAR, ts, ftr, d_tov, o_tov, ftperfga, points_over_average_ratio, hotness_ratio, std_dev]
+                    new_data.loc[len(new_data.index)] = [year, (1 if hitOver else 0), total, avg_followers, totalppg, size_of_spread, team1, team2, None, pace, ortg, drtg, drb, threePAR, ts, ftr, d_tov, o_tov, ftperfga, points_over_average_ratio, hotness_ratio, std_dev, win_pct, rsw, rating]
 
                 # print("Data for " + team1 + " vs " + team2 + " in " + str(year))
     print("gathering over percentage data for year " + str(year))
