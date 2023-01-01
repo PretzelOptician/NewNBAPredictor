@@ -1,0 +1,14 @@
+FACTORS USED IN STATA REGRESSION: 
+- Size of spread
+- Defensive rating
+- 3PAr
+- TS
+- FTr
+- Ft/FGa
+- Average points scored over league average ratio
+- Hotness ratio (last 3 games)
+- Average standard deviation of points scored between the teams
+- The teams
+
+BASKETBALL API: 
+League ID: basketball_nba

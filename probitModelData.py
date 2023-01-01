@@ -317,7 +317,7 @@ for yearOffset in range(9):
                     ftr2 += game_log_2.at[game_number, 'FTr']
                     d_tov2 += game_log_2.at[game_number, 'TOV%_1']
                     o_tov2 += game_log_2.at[game_number, 'TOV%_2']
-                    ftperfga2 += (game_log_2.at[game_number, 'FT/FGA_1'] + game_log_1.at[game_number, 'FT/FGA_2'])/2
+                    ftperfga2 += (game_log_2.at[game_number, 'FT/FGA_1'] + game_log_2.at[game_number, 'FT/FGA_2'])/2
                     points2.append(game_log_2.at[game_number, 'Tm'])
                 for game in points2: 
                     ppg2 += game
