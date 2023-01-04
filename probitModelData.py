@@ -181,7 +181,7 @@ game_logs = {}
 
 # Iterate over the list of teams and the range of years
 for team in team_names:
-    for year in range(2014, 2023):
+    for year in range(2014, 2024):
         # Use the get_game_log function to retrieve the dataframe for the current team and year
         df = get_game_log_excel(team, year)
         # Add the dataframe to the dictionary with the key (team, year)
@@ -189,18 +189,18 @@ for team in team_names:
         print("Generated game log for " + team + " in " + str(year) + "...")
 
 rsw_odds = {}
-for year in range(2014, 2023): 
+for year in range(2014, 2024): 
     df = get_rsw_odds_excel(year)
     rsw_odds[year] = df
     print("Generated pre-season odds for year " + str(year) + "...")
 
 ratings = {}
-for year in range(2014, 2023): 
+for year in range(2014, 2024): 
     df = get_ratings(year)
     ratings[year] = df
     print("Generated ratings for year " + str(year) + "...")
 
-for yearOffset in range(9):
+for yearOffset in range(10):
     year = 2014+yearOffset
 
     # api_url = "https://widgets.sports-reference.com/wg.fcgi?css=1&site=bbr&url=%2Fleagues%2FNBA_" + str(year-1) + ".html&div=div_advanced-team"
