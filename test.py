@@ -75,4 +75,24 @@ def get_league_scoring_average(year):
             games_played += 1
     return (points/games_played)
 
-print(get_league_scoring_average(2023))
+def get_pct_overs_hit(team1, team2): 
+    url = "https://www.teamrankings.com/nba/trends/ou_trends/"
+    response = requests.get(url) 
+    soup = BeautifulSoup(response.content, 'html.parser')
+    table = soup.find('table')
+    df = pd.read_html(str(table))[0]
+
+    df = df.reset_index(drop=True)
+    for x in range(df.shape[0]): 
+        if df.at[x, 'Team'] == team1: 
+            home_over = float((df.at[x, 'Over Record']).split("-")[0])
+            home_under = float((df.at[x, 'Over Record']).split("-")[1])
+        elif df.at[x, 'Team'] == team2: 
+            away_over = float((df.at[x, 'Over Record']).split("-")[0])
+            away_under = float((df.at[x, 'Over Record']).split("-")[1])
+    home_pct = home_over/(home_over+home_under)
+    away_pct = away_over/(away_over+away_under)
+    pct = (home_pct + away_pct)/2
+    return pct
+
+print(get_pct_overs_hit("LA Lakers", "LA Clippers"))

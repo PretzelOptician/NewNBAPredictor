@@ -37,82 +37,82 @@ def calc_std_dev(numbers):
   return std_dev
 
 def logit(df): 
-    home_dummy = {
-        'Atlanta': 0.0,
-        'Boston': -0.0049771,
-        'Brooklyn': -0.0976231,
-        'Charlotte': -0.1616863,
-        'Chicago': -0.1792073,
-        'Cleveland': -0.09652,
-        'Dallas': -0.1852565, 
-        'Denver': 0.1810079, 
-        'Detroit': 0.1986823,
-        'GoldenState': -0.255966,
-        'Houston': 0.0367426, 
-        'Indiana': -0.0293679, 
-        'LAClippers': -0.065803, 
-        'LALakers': -0.2043106, 
-        'Memphis': -0.1364876, 
-        'Miami': 0.0986813, 
-        'Milwaukee': 0.0950917, 
-        'Minnesota': 0.1531429,
-        'NewOrleans': 0.3482693, 
-        'NewYork': -0.1498722, 
-        'OklahomaCity': -0.0853131, 
-        'Orlando': 0.0034486, 
-        'Philadelphia': 0.0431477, 
-        'Phoenix': 0.1017284, 
-        'Portland': 0.045715, 
-        'Sacramento': 0.1420166, 
-        'SanAntonio': 0.0354622, 
-        'Toronto': 0.0958902, 
-        'Utah': -0.2651519, 
-        'Washington': 0.1219588, 
-    }
-    away_dummy = {
-        'Atlanta': 0.0,
-        'Boston': 0.082884,
-        'Brooklyn': 0.0886438,
-        'Charlotte': 0.1817,
-        'Chicago': -0.0423023,
-        'Cleveland': 0.1211452,
-        'Dallas': -0.0623778, 
-        'Denver': 0.1134192, 
-        'Detroit': -0.133122,
-        'GoldenState': -0.2301149,
-        'Houston': -0.0220769, 
-        'Indiana': 0.0618522, 
-        'LAClippers': 0.0357576, 
-        'LALakers': 0.1241524, 
-        'Memphis': 0.0785158, 
-        'Miami': -0.1313578, 
-        'Milwaukee': 0.1319199, 
-        'Minnesota': 0.3885524,
-        'NewOrleans': 0.0353463, 
-        'NewYork': 0.042184, 
-        'OklahomaCity': -0.0733661, 
-        'Orlando': -0.1777448, 
-        'Philadelphia': -0.1730964, 
-        'Phoenix': 0.0218554, 
-        'Portland': 0.2001103, 
-        'Sacramento': 0.0612493, 
-        'SanAntonio': 0.1352708, 
-        'Toronto': 0.1909384, 
-        'Utah': -0.1020129, 
-        'Washington': 0.2796706,
-    }
+    # home_dummy = {
+    #     'Atlanta': 0.0,
+    #     'Boston': -0.0049771,
+    #     'Brooklyn': -0.0976231,
+    #     'Charlotte': -0.1616863,
+    #     'Chicago': -0.1792073,
+    #     'Cleveland': -0.09652,
+    #     'Dallas': -0.1852565, 
+    #     'Denver': 0.1810079, 
+    #     'Detroit': 0.1986823,
+    #     'GoldenState': -0.255966,
+    #     'Houston': 0.0367426, 
+    #     'Indiana': -0.0293679, 
+    #     'LAClippers': -0.065803, 
+    #     'LALakers': -0.2043106, 
+    #     'Memphis': -0.1364876, 
+    #     'Miami': 0.0986813, 
+    #     'Milwaukee': 0.0950917, 
+    #     'Minnesota': 0.1531429,
+    #     'NewOrleans': 0.3482693, 
+    #     'NewYork': -0.1498722, 
+    #     'OklahomaCity': -0.0853131, 
+    #     'Orlando': 0.0034486, 
+    #     'Philadelphia': 0.0431477, 
+    #     'Phoenix': 0.1017284, 
+    #     'Portland': 0.045715, 
+    #     'Sacramento': 0.1420166, 
+    #     'SanAntonio': 0.0354622, 
+    #     'Toronto': 0.0958902, 
+    #     'Utah': -0.2651519, 
+    #     'Washington': 0.1219588, 
+    # }
+    # away_dummy = {
+    #     'Atlanta': 0.0,
+    #     'Boston': 0.082884,
+    #     'Brooklyn': 0.0886438,
+    #     'Charlotte': 0.1817,
+    #     'Chicago': -0.0423023,
+    #     'Cleveland': 0.1211452,
+    #     'Dallas': -0.0623778, 
+    #     'Denver': 0.1134192, 
+    #     'Detroit': -0.133122,
+    #     'GoldenState': -0.2301149,
+    #     'Houston': -0.0220769, 
+    #     'Indiana': 0.0618522, 
+    #     'LAClippers': 0.0357576, 
+    #     'LALakers': 0.1241524, 
+    #     'Memphis': 0.0785158, 
+    #     'Miami': -0.1313578, 
+    #     'Milwaukee': 0.1319199, 
+    #     'Minnesota': 0.3885524,
+    #     'NewOrleans': 0.0353463, 
+    #     'NewYork': 0.042184, 
+    #     'OklahomaCity': -0.0733661, 
+    #     'Orlando': -0.1777448, 
+    #     'Philadelphia': -0.1730964, 
+    #     'Phoenix': 0.0218554, 
+    #     'Portland': 0.2001103, 
+    #     'Sacramento': 0.0612493, 
+    #     'SanAntonio': 0.1352708, 
+    #     'Toronto': 0.1909384, 
+    #     'Utah': -0.1020129, 
+    #     'Washington': 0.2796706,
+    # }
     
     #chatGPT code:: 
     # Extract the relevant columns from the dataframe
-    X = df[['size_of_spread', 'drtg', 'threePAR', 'points_over_average_ratio', 'std_dev']]
+    X = df[['total', 'size_of_spread', 'pct_overs_hit', 'ortg', 'drtg', 'drb', 'threePAR', 'ts', 'ftr', 'points_over_average_ratio', 'hotness_ratio', 'std_dev']]
     # Add a column of consts to the dataframe to represent the intercept term
-    X['intercept'] = 5.472246
-    coefs = [0.0162176, -0.0308513, 1.435453, -3.168072, 0.0409806, 1]
+    X['intercept'] = 4.644535
+    coefs = [0.0040295, 0.0120225, -0.392392, 0.028596,  -0.0214184, -0.0128709, 0.8110862, -6.346099, -0.7018032, -2.42325, 0.5000966, 0.0161823, 1]
     z = np.dot(X, coefs)
-    for game in range(len(z)): 
-        home_dummy_val = home_dummy.get(df.at[game, 'home_team'])
-        away_dummy_val = away_dummy.get(df.at[game, 'away_team'])
-        z[game] += (home_dummy_val + away_dummy_val)
+    # for game in range(len(z)): 
+    #     home_dummy_val = home_dummy.get(df.at[game, 'home_team'])
+    #     away_dummy_val = away_dummy.get(df.at[game, 'away_team'])
+    #     z[game] += (home_dummy_val + away_dummy_val)
     prob = 1 / (1 + np.exp(-z))
     # Calculate the probability using the sigmoid function
     #THIS ALL WORKS LMAO
@@ -255,7 +255,6 @@ def get_2k_ratings(year):
     return df
 
 def get_odds(): 
-    import requests
     url = "https://odds.p.rapidapi.com/v4/sports/basketball_nba/odds"
     querystring = {"regions":"us","oddsFormat":"decimal","markets":"spreads,totals","dateFormat":"iso"}
     headers = {
@@ -264,6 +263,44 @@ def get_odds():
     }
     response = requests.request("GET", url, headers=headers, params=querystring)
     return response
+
+def get_pct_overs_hit(team1, team2): 
+    if team1 == 'Golden State Warriors': team1 = 'Golden State'
+    elif team1 == 'Los Angeles Clippers': team1 = 'LA Clippers'
+    elif team1 == 'Los Angeles Lakers': team1 = 'LA Lakers'
+    elif team1 == 'New Orleans Pelicans': team1 = 'New Orleans'
+    elif team1 == 'New York Knicks': team1 = 'New York'
+    elif team1 == 'Oklahoma City Thunder': team1 = 'Okla City'
+    elif team1 == 'San Antonio Spurs': team1 = 'San Antonio'
+    else: team1 = team1.split(' ')[0]
+
+    if team2 == 'Golden State Warriors': team2 = 'Golden State'
+    elif team2 == 'Los Angeles Clippers': team2 = 'LA Clippers'
+    elif team2 == 'Los Angeles Lakers': team2 = 'LA Lakers'
+    elif team2 == 'New Orleans Pelicans': team2 = 'New Orleans'
+    elif team2 == 'New York Knicks': team2 = 'New York'
+    elif team2 == 'Oklahoma City Thunder': team2 = 'Okla City'
+    elif team2 == 'San Antonio Spurs': team2 = 'San Antonio'
+    else: team2 = team2.split(' ')[0]
+
+    url = "https://www.teamrankings.com/nba/trends/ou_trends/"
+    response = requests.get(url) 
+    soup = BeautifulSoup(response.content, 'html.parser')
+    table = soup.find('table')
+    df = pd.read_html(str(table))[0]
+
+    df = df.reset_index(drop=True)
+    for x in range(df.shape[0]): 
+        if df.at[x, 'Team'] == team1: 
+            home_over = float((df.at[x, 'Over Record']).split("-")[0])
+            home_under = float((df.at[x, 'Over Record']).split("-")[1])
+        elif df.at[x, 'Team'] == team2: 
+            away_over = float((df.at[x, 'Over Record']).split("-")[0])
+            away_under = float((df.at[x, 'Over Record']).split("-")[1])
+    home_pct = home_over/(home_over+home_under)
+    away_pct = away_over/(away_over+away_under)
+    pct = (home_pct + away_pct)/2
+    return pct
 
 team_names = [ "Atlanta", "Boston", "Brooklyn", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"]
 
@@ -430,7 +467,7 @@ for game in odds:
         std_dev2 = calc_std_dev(points2)
         std_dev = (std_dev1 + std_dev2)/2
 
-        total_data.loc[len(total_data.index)] = [year, None, total, avg_followers, totalppg, size_of_spread, get_city(team1), get_city(team2), None, pace, ortg, drtg, drb, threePAR, ts, ftr, d_tov, o_tov, ftperfga, points_over_average_ratio, hotness_ratio, std_dev, None, None, None]
+        total_data.loc[len(total_data.index)] = [year, None, total, avg_followers, totalppg, size_of_spread, get_city(team1), get_city(team2), get_pct_overs_hit(team1, team2), pace, ortg, drtg, drb, threePAR, ts, ftr, d_tov, o_tov, ftperfga, points_over_average_ratio, hotness_ratio, std_dev, None, None, None]
         #last 3 vars: win_pct, rsw, rating
 
 print(total_data)
