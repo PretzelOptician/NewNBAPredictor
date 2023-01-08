@@ -63,7 +63,7 @@ for dict_ in dict_list:
         dict_['z_total'] = -dict_['z_total']
         dict_['over'] = False
     total_string = "over" if dict_['over'] else "under"
-    print(f"For game {dict_['away_team']} at {dict_['home_team']}, the average AWCS score is {dict_['z_total']/dict_['count']} for the {total_string}")
+    print(f"For game {dict_['away_team']} at {dict_['home_team']}, the average AWCS score is {dict_['z_total']/dict_['count']} for the {total_string} (total: {dict_['z_total']})")
 
 ##spreads
 print("\nGenerating consensus scores for spread bets: ")
@@ -97,4 +97,4 @@ for dict_ in dict_list:
         dict_['home'] = False
         # print("z val is negative, so dict_['home'] is " + str(dict_['home']))
     total_string = dict_['home_team'] if dict_['home'] else dict_['away_team']
-    print(f"For game {dict_['away_team']} at {dict_['home_team']}, the average AWCS score is {dict_['z_total']/dict_['count']} for {total_string}")
+    print(f"For game {dict_['away_team']} at {dict_['home_team']}, the average AWCS score is {dict_['z_total']/dict_['count']} for {total_string} (total: {dict_['z_total']})")

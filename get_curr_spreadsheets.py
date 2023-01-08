@@ -330,7 +330,7 @@ ratings = get_2k_ratings(CURR_YEAR)
 league_scoring_average = get_league_scoring_average(CURR_YEAR)
 # print(league_scoring_average)
 odds = get_odds().json()
-print(odds)
+# print(odds)
 total_data = pd.DataFrame({'year': [], 'hitOver': [], 'total': [], 'avg_popularity': [], 'totalppg': [], 'size_of_spread': [], 'home_team': [], 'away_team': [], 'pct_overs_hit': [], 'pace': [], 'ortg': [], 'drtg': [], 'drb': [], 'threePAR': [], 'ts': [], 'ftr': [], 'd_tov': [], 'o_tov': [], 'ftperfga': [], 'points_over_average_ratio': [], 'hotness_ratio': [], 'std_dev': [], 'win_pct': [], 'rsw': [], 'ratings_2k': []})
 for game in odds: 
     if len(game['bookmakers'][0]['markets'])>1: 
@@ -479,5 +479,5 @@ for x in range(df.shape[0]):
     letter = 'o' if over_prob > 0.5 else 'u'
     away_team = df.at[x, 'away_team']
     home_team = df.at[x, 'home_team']
+    pct = str(over_prob*100) if letter=='o' else str(100-over_prob*100)
     print(f'{away_team} at {home_team}: {letter}{str(total)} with probability {str(over_prob*100)}%')
-

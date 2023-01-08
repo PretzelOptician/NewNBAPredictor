@@ -23,39 +23,6 @@ def calc_std_dev(numbers):
 
   return std_dev
 
-
-def get_avg_followers(team): 
-    if team == 'LALakers' or team == 'LA Lakers': return 52321433
-    elif team == 'Cleveland': return 23853389
-    elif team == 'Boston': return 19952367
-    elif team == 'Milwaukee': return 10288717
-    elif team == 'Chicago': return 30435628
-    elif team == 'Portland': return 7117111
-    elif team == 'Toronto': return 8798856
-    elif team == 'Philadelphia': return 7925637
-    elif team == 'Atlanta': return 5635700
-    elif team == 'Orlando': return 6161629
-    elif team == 'Brooklyn': return 9902212
-    elif team == 'Washington': return 8209114
-    elif team == 'Miami': return 25825318
-    elif team == 'NewYork': return 11755482
-    elif team == 'Indiana': return 6768683
-    elif team == 'Detroit': return 4443090
-    elif team == 'OklahomaCity' or team == 'Oklahoma City': return 14379492
-    elif team == 'Sacramento': return 10624663
-    elif team == 'Minnesota': return 5790088
-    elif team == 'Phoenix': return 6479573
-    elif team == 'SanAntonio' or team == 'San Antonio': return 14554210
-    elif team == 'Memphis': return 5430199
-    elif team == 'Denver': return 5618580
-    elif team == 'Houston': return 25544036
-    elif team == 'Utah': return 8164010
-    elif team == 'NewOrleans' or team == 'New Orleans': return 6016902
-    elif team == 'GoldenState' or team == 'Golden State': return 48149619
-    elif team == 'LAClippers' or team == 'LA Clippers': return 10709842
-    elif team == 'Charlotte': return 5802049
-    elif team == 'Dallas': return 10535695
-
 # convert team name to the name used in the league stats sheet. note that it only returns the first word as this is the name used to parse the spreadsheet
 def convert_team_name(team, year): 
     if team == 'LALakers' or team == 'LA Lakers': return 'Los Angeles Lakers'
@@ -162,7 +129,7 @@ def get_ratings(year):
     return df
 
 pd.set_option('display.max_rows', None)
-total_data = pd.DataFrame({'year': [], 'hitOver': [], 'total': [], 'avg_popularity': [], 'totalppg': [], 'size_of_spread': [], 'home_team': [], 'away_team': [], 'pct_overs_hit': [], 'pace': [], 'ortg': [], 'drtg': [], 'drb': [], 'threePAR': [], 'ts': [], 'ftr': [], 'd_tov': [], 'o_tov': [], 'ftperfga': [], 'points_over_average_ratio': [], 'hotness_ratio': [], 'std_dev': [], 'win_pct': [], 'rsw': [], 'ratings_2k': []})
+total_data = pd.DataFrame({'year': [], 'home_spread_hit': [], 'total': [], 'spread': [], 'home_team': [], 'away_team': [], 'pct_spreads_hit_h': [], 'pct_spreads_hit_a': [], 'ppg_h': [], 'ppg_a': [], 'pace_h': [], 'pace_a': [], 'ortg_h': [], 'ortg_a': [], 'drtg_h': [], 'drtg_a': [], 'drb_h': [], 'drb_a': [], 'threePAR_h': [], 'threePAR_a': [], 'ts_h': [], 'ts_a': [], 'ftr_h': [], 'ftr_a': [], 'd_tov_h': [], 'd_tov_a': [], 'o_tov_h': [], 'o_tov_a': [], 'ftperfga_h': [], 'ftperfga_a': [], 'points_over_average_ratio_h': [], 'points_over_average_ratio_a': [], 'hotness_ratio_h': [], 'hotness_ratio_a': [], 'std_dev_h': [], 'std_dev_a': [], 'win_pct_h': [], 'win_pct_a': [], 'rsw_h': [], 'rsw_a': [], 'ratings_2k_h': [], 'ratings_2k_a': []})
 
 team_names = [ "Atlanta", "Boston", "Brooklyn", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"]
 
@@ -211,32 +178,32 @@ for yearOffset in range(10):
     # leagueData = leagueData.drop(['Unnamed: 0_level_0'], axis=1)
 
     data = pd.read_excel('../NBA-Spreadsheets/' + str(year) + '/oddsStats.xlsx')
-    new_data = pd.DataFrame({'year': [], 'hitOver': [], 'total': [], 'avg_popularity': [], 'totalppg': [], 'size_of_spread': [], 'home_team': [], 'away_team': [], 'pct_overs_hit': [], 'pace': [], 'ortg': [], 'drtg': [], 'drb': [], 'threePAR': [], 'ts': [], 'ftr': [], 'd_tov': [], 'o_tov': [], 'ftperfga': [], 'points_over_average_ratio': [], 'hotness_ratio': [], 'std_dev': [], 'win_pct': [], 'rsw': [], 'ratings_2k': []})
+    new_data = pd.DataFrame({'year': [], 'home_spread_hit': [], 'total': [], 'spread': [], 'home_team': [], 'away_team': [], 'pct_spreads_hit_h': [], 'pct_spreads_hit_a': [], 'ppg_h': [], 'ppg_a': [], 'pace_h': [], 'pace_a': [], 'ortg_h': [], 'ortg_a': [], 'drtg_h': [], 'drtg_a': [], 'drb_h': [], 'drb_a': [], 'threePAR_h': [], 'threePAR_a': [], 'ts_h': [], 'ts_a': [], 'ftr_h': [], 'ftr_a': [], 'd_tov_h': [], 'd_tov_a': [], 'o_tov_h': [], 'o_tov_a': [], 'ftperfga_h': [], 'ftperfga_a': [], 'points_over_average_ratio_h': [], 'points_over_average_ratio_a': [], 'hotness_ratio_h': [], 'hotness_ratio_a': [], 'std_dev_h': [], 'std_dev_a': [], 'win_pct_h': [], 'win_pct_a': [], 'rsw_h': [], 'rsw_a': [], 'ratings_2k_h': [], 'ratings_2k_a': []})
     for row in range(data.shape[0]): 
         if row%2==1: 
 
             # phase 1 factors: basic numbers
 
+            #home is negative
             team1 = data.at[row, 'Team']
             team2 = data.at[row-1, 'Team']
             # print('for: ' + team1 + ' vs ' + team2)
-            if data.at[row, 'Close']!='pk' and data.at[row, 'Close']>=100:
+            if data.at[row, 'Close']!='pk' and data.at[row, 'Close']>=100: #this means away is favored, spread is +
                 #is the total
                 total = data.at[row, 'Close']
                 if data.at[row-1, 'Close'] != 'pk' and data.at[row-1, 'Close'] != 'PK': 
-                    size_of_spread = data.at[row-1, 'Close']
+                    spread = data.at[row-1, 'Close']
                 else: 
-                    size_of_spread = 0
-            else: 
+                    spread = 0
+            else: #home is favored, spread is -
                 total = data.at[row-1, 'Close']
                 if data.at[row, 'Close'] != 'pk' and data.at[row, 'Close'] != 'PK': 
-                    size_of_spread = data.at[row, 'Close']
+                    spread = -(data.at[row, 'Close'])
                 else: 
-                    size_of_spread = 0
-            final_score = data.at[row, 'Final'] + data.at[row-1, 'Final']
-            hitOver = final_score > total
-            push = final_score == total
-            avg_followers = (get_avg_followers(team2) + get_avg_followers(team1))/2
+                    spread = 0
+            final_spread = data.at[row-1, 'Final'] - data.at[row, 'Final']
+            home_spread_hit = final_spread < spread
+            push = final_spread == spread
             
             # phase 2 factors: advanced stats
 
@@ -335,17 +302,17 @@ for yearOffset in range(10):
                     pace2 /= games_played_team_two
                     ppg2 /= games_played_team_two
 
-                pace = (pace1 + pace2)/2
-                ortg = (ortg1 + ortg2)/2
-                drtg = (drtg1 + drtg2)/2
-                drb = (drb1 + drb2)/2
-                threePAR = (threePAR1 + threePAR2)/2
-                ts = (ts1 + ts2)/2
-                ftr = (ftr1 + ftr2)/2
-                d_tov = (d_tov1 + d_tov2)/2
-                o_tov = (o_tov1 + o_tov2)/2
-                ftperfga = (ftperfga1 + ftperfga2)/2
-                totalppg = (ppg1 + ppg2)/2
+                pace = (pace2 - pace1)
+                ortg = (ortg2 - ortg1)
+                drtg = (drtg2 - drtg1)
+                drb = (drb2 - drb1)
+                threePAR = (threePAR2 - threePAR1)
+                ts = (ts2 - ts1)
+                ftr = (ftr2 - ftr1)
+                d_tov = (d_tov2 - d_tov1)
+                o_tov = (o_tov2 - o_tov1)
+                ftperfga = (ftperfga2 - ftperfga1)
+                totalppg = (ppg2 - ppg1)
 
                 ##phase 3 factors
 
@@ -358,9 +325,14 @@ for yearOffset in range(10):
                         total_league_scoring += data.at[row2, 'Final']
                 league_scoring_average = 0
                 points_over_average_ratio = 0
+                points_over_average_ratio1 = 0
+                points_over_average_ratio2 = 0
                 if total_league_scoring > 0: 
                     league_scoring_average = total_league_scoring / games_played
                     points_over_average_ratio = totalppg / league_scoring_average
+                    points_over_average_ratio1 = (ppg1/league_scoring_average)
+                    points_over_average_ratio2 = (ppg2/league_scoring_average)
+                    points_over_average_ratio = (ppg2/league_scoring_average) - (ppg1/league_scoring_average)
 
                 #hotness factor
                 recent_ppg1 = 0
@@ -383,12 +355,12 @@ for yearOffset in range(10):
                 hotness_ratio2 = 1
                 if ppg2 > 0: 
                     hotness_ratio2 = recent_ppg2/ppg2
-                hotness_ratio = (hotness_ratio1 + hotness_ratio2)/2
+                hotness_ratio = (hotness_ratio2 - hotness_ratio1)
 
                 #standard deviation of points
                 std_dev1 = calc_std_dev(points1)
                 std_dev2 = calc_std_dev(points2)
-                std_dev = (std_dev1 + std_dev2)/2
+                std_dev = (std_dev2 - std_dev1)
 
                 #phase 4 factors
                 
@@ -422,7 +394,7 @@ for yearOffset in range(10):
                     win_pct2 = 0
                 else: 
                     win_pct2 = wins2/games2
-                win_pct = (win_pct1 + win_pct2)/2
+                win_pct = (win_pct2 - win_pct1)
 
                 #rsw
                 preseason_odds = rsw_odds[year]
@@ -433,7 +405,7 @@ for yearOffset in range(10):
                         rsw1 = preseason_odds.at[team, 'W-L O/U']
                     elif preseason_odds.at[team, 'Team'] == convert_team_name(team2, year): 
                         rsw2 = preseason_odds.at[team, 'W-L O/U']
-                rsw = (rsw1+rsw2)/2
+                rsw = (rsw2-rsw1)
 
                 #2k ratings
                 ratings_for_year = ratings[year]
@@ -451,32 +423,36 @@ for yearOffset in range(10):
                         rating1 = ratings_for_year.at[team, col_name]
                     elif ratings_for_year.at[team, 'Team'] == team2name: 
                         rating2 = ratings_for_year.at[team, col_name]
-                rating = (rating1 + rating2)/2
+                rating = (rating2 - rating1)
 
                 # debugging
                 outlier = (team1 == "Brooklyn" and team2 == "Oklahoma City" and year == 2016) or (team1 == "Toronto" and team2 == "LA Clippers" and year == 2016)
 
                 #push
                 if not push and not outlier: 
-                    new_data.loc[len(new_data.index)] = [year, (1 if hitOver else 0), total, avg_followers, totalppg, size_of_spread, team1, team2, None, pace, ortg, drtg, drb, threePAR, ts, ftr, d_tov, o_tov, ftperfga, points_over_average_ratio, hotness_ratio, std_dev, win_pct, rsw, rating]
+                    new_data.loc[len(new_data.index)] = [year, (1 if home_spread_hit else 0), total, spread, team1, team2, None, None, ppg1, ppg2, pace1, pace2, ortg1, ortg2, drtg1, drtg2, drb1, drb2, threePAR1, threePAR2, ts1, ts2, ftr1, ftr2, d_tov1, d_tov2, o_tov1, o_tov2, ftperfga1, ftperfga2, points_over_average_ratio1, points_over_average_ratio2, hotness_ratio1, hotness_ratio2, std_dev1, std_dev2, win_pct1, win_pct2, rsw1, rsw2, rating1, rating2]
 
                 # print("Data for " + team1 + " vs " + team2 + " in " + str(year))
-    print("gathering over percentage data for year " + str(year))
+    print("gathering spread percentage data for year " + str(year))
     for row in range(new_data.shape[0]): 
         if row > ROW_START: 
-            totalGames = 0
-            oversHit = 0
+            totalGames1 = 0
+            spreadsCovered1 = 0
+            totalGames2 = 0
+            spreadsCovered2 = 0
             for row2 in range(row-1): 
                 if (new_data.at[row2, 'home_team'] == new_data.at[row, 'home_team'] or new_data.at[row2, 'away_team'] == new_data.at[row, 'home_team']): 
-                    totalGames += 1
-                    oversHit += new_data.at[row2, 'hitOver']
+                    totalGames1 += 1
+                    spreadsCovered1 += new_data.at[row2, 'home_spread_hit']
             for row2 in range(row-1): 
                 if (new_data.at[row2, 'home_team'] == new_data.at[row, 'away_team'] or new_data.at[row2, 'away_team'] == new_data.at[row, 'away_team']): 
-                    totalGames += 1
-                    oversHit += new_data.at[row2, 'hitOver']
-            pct_overs_hit = float(oversHit)/float(totalGames)
-            new_data.at[row, 'pct_overs_hit'] = pct_overs_hit
+                    totalGames2 += 1
+                    spreadsCovered2 += new_data.at[row2, 'home_spread_hit']
+            pct_spreads_covered1 = float(spreadsCovered1)/float(totalGames1)
+            pct_spreads_covered2 = float(spreadsCovered2)/float(totalGames2)
+            new_data.at[row, 'pct_spreads_hit_h'] = pct_spreads_covered1
+            new_data.at[row, 'pct_spreads_hit_a'] = pct_spreads_covered2
     total_data = pd.concat([total_data, new_data.iloc[(ROW_START+1):]], ignore_index=True)
     
 print(total_data)
-total_data.to_excel("probit_data.xlsx")
+total_data.to_excel("spread_data.xlsx")
