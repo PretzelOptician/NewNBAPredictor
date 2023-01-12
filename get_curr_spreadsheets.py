@@ -480,4 +480,14 @@ for x in range(df.shape[0]):
     away_team = df.at[x, 'away_team']
     home_team = df.at[x, 'home_team']
     pct = str(over_prob*100) if letter=='o' else str(100-over_prob*100)
-    print(f'{away_team} at {home_team}: {letter}{str(total)} with probability {str(over_prob*100)}%')
+    print(f'{away_team} at {home_team}: {letter}{str(total)} with probability {pct}%')
+print("\n Bets greater than 53%: ")
+for x in range(df.shape[0]): 
+    total = df.at[x, 'total'] 
+    over_prob = df.at[x, 'calc_over_prob']
+    letter = 'o' if over_prob > 0.5 else 'u'
+    away_team = df.at[x, 'away_team']
+    home_team = df.at[x, 'home_team']
+    pct = str(over_prob*100) if letter=='o' else str(100-over_prob*100)
+    if float(pct) > 53: 
+        print(f'{away_team} at {home_team}: {letter}{str(total)} with probability {pct}%')

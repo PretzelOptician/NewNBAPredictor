@@ -41,6 +41,7 @@ print("Generating consensus scores for total bets: ")
 for game in game_ids: 
     dict1 = {'id': game['id'], 'home_team': game['home_team_id'], 'away_team': game['road_team_id'], 'z_total': 0.0, 'count': 0, 'over': True}
     dict_list.append(dict1)
+z_total_ou = 0
 for user in picks: 
     if user['season_pick_pct'] > 60 and user['season_win_pct'] > 52.4: 
         # print(user['username'])
@@ -48,6 +49,7 @@ for user in picks:
         # print(z)
         # for bruh in user['picks']: 
         #     print(bruh)
+        z_total_ou += z
         for dict_ in dict_list: 
             id = str(dict_['id'])
             if(id in user['picks']): 
@@ -63,7 +65,7 @@ for dict_ in dict_list:
         dict_['z_total'] = -dict_['z_total']
         dict_['over'] = False
     total_string = "over" if dict_['over'] else "under"
-    print(f"For game {dict_['away_team']} at {dict_['home_team']}, the average AWCS score is {dict_['z_total']/dict_['count']} for the {total_string} (total: {dict_['z_total']})")
+    print(f"For game {dict_['away_team']} at {dict_['home_team']}, the average AWCS score is {dict_['z_total']/dict_['count']} for the {total_string} (total: {dict_['z_total']}, percent of Z with pick made: {100*dict_['z_total']/z_total_ou}%)")
 
 ##spreads
 print("\nGenerating consensus scores for spread bets: ")
@@ -77,9 +79,11 @@ for game in game_ids:
     ## HOME IS POSITIVE Z
     dict1 = {'id': game['id'], 'home_team': game['home_team_id'], 'away_team': game['road_team_id'], 'z_total': 0.0, 'count': 0, 'home': True}
     dict_list.append(dict1)
+z_total_spread = 0
 for user in picks: 
     if user['season_pick_pct'] > 60 and user['season_win_pct'] > 52.4:
         z = get_z_score(user)
+        z_total_spread += z
         for dict_ in dict_list: 
             id = str(dict_['id'])
             if(id in user['picks']): 
@@ -97,4 +101,4 @@ for dict_ in dict_list:
         dict_['home'] = False
         # print("z val is negative, so dict_['home'] is " + str(dict_['home']))
     total_string = dict_['home_team'] if dict_['home'] else dict_['away_team']
-    print(f"For game {dict_['away_team']} at {dict_['home_team']}, the average AWCS score is {dict_['z_total']/dict_['count']} for {total_string} (total: {dict_['z_total']})")
+    print(f"For game {dict_['away_team']} at {dict_['home_team']}, the average AWCS score is {dict_['z_total']/dict_['count']} for {total_string} (total: {dict_['z_total']}, percent of Z with pick made: {100*dict_['z_total']/z_total_spread}%)")

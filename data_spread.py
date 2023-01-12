@@ -5,6 +5,16 @@ import math
 
 ROW_START = 150
 ROW_PLAYOFFS = 0
+CLOSE_GAME_THRESHOLD = 6
+
+def average(numbers): 
+    sum = 0
+    for x in numbers: 
+        sum += x
+    if sum == 0: 
+        return 0
+    else: 
+        return float(sum/len(numbers))
 
 #chatGPT generated function
 def calc_std_dev(numbers):
@@ -128,8 +138,13 @@ def get_ratings(year):
     df = pd.read_excel(filepath)
     return df
 
+def get_mov_excel(year): 
+    filepath = f'./movRatings/{year}.xlsx'
+    df = pd.read_excel(filepath)
+    return df
+
 pd.set_option('display.max_rows', None)
-total_data = pd.DataFrame({'year': [], 'home_spread_hit': [], 'total': [], 'spread': [], 'home_team': [], 'away_team': [], 'pct_spreads_hit_h': [], 'pct_spreads_hit_a': [], 'ppg_h': [], 'ppg_a': [], 'pace_h': [], 'pace_a': [], 'ortg_h': [], 'ortg_a': [], 'drtg_h': [], 'drtg_a': [], 'drb_h': [], 'drb_a': [], 'threePAR_h': [], 'threePAR_a': [], 'ts_h': [], 'ts_a': [], 'ftr_h': [], 'ftr_a': [], 'd_tov_h': [], 'd_tov_a': [], 'o_tov_h': [], 'o_tov_a': [], 'ftperfga_h': [], 'ftperfga_a': [], 'points_over_average_ratio_h': [], 'points_over_average_ratio_a': [], 'hotness_ratio_h': [], 'hotness_ratio_a': [], 'std_dev_h': [], 'std_dev_a': [], 'win_pct_h': [], 'win_pct_a': [], 'rsw_h': [], 'rsw_a': [], 'ratings_2k_h': [], 'ratings_2k_a': []})
+total_data = pd.DataFrame({'year': [], 'home_spread_hit': [], 'total': [], 'spread': [], 'home_team': [], 'away_team': [], 'pct_spreads_hit_h': [], 'pct_spreads_hit_a': [], 'ppg_h': [], 'ppg_a': [], 'pace_h': [], 'pace_a': [], 'ortg_h': [], 'ortg_a': [], 'drtg_h': [], 'drtg_a': [], 'drb_h': [], 'drb_a': [], 'threePAR_h': [], 'threePAR_a': [], 'ts_h': [], 'ts_a': [], 'ftr_h': [], 'ftr_a': [], 'd_tov_h': [], 'd_tov_a': [], 'o_tov_h': [], 'o_tov_a': [], 'ftperfga_h': [], 'ftperfga_a': [], 'points_over_average_ratio_h': [], 'points_over_average_ratio_a': [], 'hotness_ratio_h': [], 'hotness_ratio_a': [], 'std_dev_h': [], 'std_dev_a': [], 'win_pct_h': [], 'win_pct_a': [], 'rsw_h': [], 'rsw_a': [], 'ratings_2k_h': [], 'ratings_2k_a': [], 'win_pct_close_h': [], 'win_pct_close_a': [], 'sos_h': [], 'sos_a': [], 'mov_a_h': [], 'mov_a_a': []})
 
 team_names = [ "Atlanta", "Boston", "Brooklyn", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"]
 
@@ -167,27 +182,26 @@ for year in range(2014, 2024):
     ratings[year] = df
     print("Generated ratings for year " + str(year) + "...")
 
+movs = {}
+for year in range(2013, 2023): 
+    df = get_mov_excel(year)
+    movs[year] = df
+    print("Generated MOV ratings for year " + str(year) + "...")
+
 for yearOffset in range(10):
     year = 2014+yearOffset
 
-    # api_url = "https://widgets.sports-reference.com/wg.fcgi?css=1&site=bbr&url=%2Fleagues%2FNBA_" + str(year-1) + ".html&div=div_advanced-team"
-    # response = requests.get(api_url) 
-    # soup = BeautifulSoup(response.content, 'html.parser')
-    # table = soup.find('table')
-    # leagueData = pd.read_html(str(table))[0]
-    # leagueData = leagueData.drop(['Unnamed: 0_level_0'], axis=1)
-
     data = pd.read_excel('../NBA-Spreadsheets/' + str(year) + '/oddsStats.xlsx')
-    new_data = pd.DataFrame({'year': [], 'home_spread_hit': [], 'total': [], 'spread': [], 'home_team': [], 'away_team': [], 'pct_spreads_hit_h': [], 'pct_spreads_hit_a': [], 'ppg_h': [], 'ppg_a': [], 'pace_h': [], 'pace_a': [], 'ortg_h': [], 'ortg_a': [], 'drtg_h': [], 'drtg_a': [], 'drb_h': [], 'drb_a': [], 'threePAR_h': [], 'threePAR_a': [], 'ts_h': [], 'ts_a': [], 'ftr_h': [], 'ftr_a': [], 'd_tov_h': [], 'd_tov_a': [], 'o_tov_h': [], 'o_tov_a': [], 'ftperfga_h': [], 'ftperfga_a': [], 'points_over_average_ratio_h': [], 'points_over_average_ratio_a': [], 'hotness_ratio_h': [], 'hotness_ratio_a': [], 'std_dev_h': [], 'std_dev_a': [], 'win_pct_h': [], 'win_pct_a': [], 'rsw_h': [], 'rsw_a': [], 'ratings_2k_h': [], 'ratings_2k_a': []})
+    new_data = pd.DataFrame({'year': [], 'home_spread_hit': [], 'total': [], 'spread': [], 'home_team': [], 'away_team': [], 'pct_spreads_hit_h': [], 'pct_spreads_hit_a': [], 'ppg_h': [], 'ppg_a': [], 'pace_h': [], 'pace_a': [], 'ortg_h': [], 'ortg_a': [], 'drtg_h': [], 'drtg_a': [], 'drb_h': [], 'drb_a': [], 'threePAR_h': [], 'threePAR_a': [], 'ts_h': [], 'ts_a': [], 'ftr_h': [], 'ftr_a': [], 'd_tov_h': [], 'd_tov_a': [], 'o_tov_h': [], 'o_tov_a': [], 'ftperfga_h': [], 'ftperfga_a': [], 'points_over_average_ratio_h': [], 'points_over_average_ratio_a': [], 'hotness_ratio_h': [], 'hotness_ratio_a': [], 'std_dev_h': [], 'std_dev_a': [], 'win_pct_h': [], 'win_pct_a': [], 'rsw_h': [], 'rsw_a': [], 'ratings_2k_h': [], 'ratings_2k_a': [], 'win_pct_close_h': [], 'win_pct_close_a': [], 'sos_h': [], 'sos_a': [], 'mov_a_h': [], 'mov_a_a': []})
     for row in range(data.shape[0]): 
         if row%2==1: 
+            print(f"{str(100*float(row/data.shape[0]))}% through the {str(year)} season...")
 
             # phase 1 factors: basic numbers
 
             #home is negative
             team1 = data.at[row, 'Team']
             team2 = data.at[row-1, 'Team']
-            # print('for: ' + team1 + ' vs ' + team2)
             if data.at[row, 'Close']!='pk' and data.at[row, 'Close']>=100: #this means away is favored, spread is +
                 #is the total
                 total = data.at[row, 'Close']
@@ -365,36 +379,27 @@ for yearOffset in range(10):
                 #phase 4 factors
                 
                 #winning percentage
-                wins1 = 0
-                wins2 = 0
-                games1 = 0
-                games2 = 0
-                for row2 in range(row-1): 
-                    if data.at[row2, 'Team'] == team1: 
-                        games1 += 1
-                        if row2%2 == 1: #row-1 is the other team
-                            if data.at[row2, 'Final'] > data.at[row2-1, 'Final']: 
-                                wins1 += 1
-                        else: #row+1 is the other team
-                            if data.at[row2, 'Final'] > data.at[row2+1, 'Final']: 
-                                wins1 += 1
-                    elif data.at[row2, 'Team'] == team2: 
-                        games2 += 1
-                        if row2%2 == 1: #row-1 is the other team
-                            if data.at[row2, 'Final'] > data.at[row2-1, 'Final']: 
-                                wins2 += 1
-                        else: #row+1 is the other team
-                            if data.at[row2, 'Final'] > data.at[row2+1, 'Final']: 
-                                wins2 += 1
-                if games1 == 0: 
-                    win_pct1 = 0
-                else: 
-                    win_pct1 = wins1/games1
-                if games2 == 0: 
-                    win_pct2 = 0
-                else: 
-                    win_pct2 = wins2/games2
-                win_pct = (win_pct2 - win_pct1)
+
+                def win_pct(team, row, data): 
+                    wins = 0
+                    games = 0
+                    for row2 in range(row-1): 
+                        if data.at[row2, 'Team'] == team: 
+                            games += 1
+                            if row2%2 == 1: #row-1 is the other team
+                                if data.at[row2, 'Final'] > data.at[row2-1, 'Final']: 
+                                    wins += 1
+                            else: #row+1 is the other team
+                                if data.at[row2, 'Final'] > data.at[row2+1, 'Final']: 
+                                    wins += 1
+                    if games == 0: 
+                        win_pct = 0
+                    else: 
+                        win_pct = wins/games
+                    return win_pct
+
+                win_pct1 = win_pct(team1, row, data)
+                win_pct2 = win_pct(team2, row, data)
 
                 #rsw
                 preseason_odds = rsw_odds[year]
@@ -425,12 +430,55 @@ for yearOffset in range(10):
                         rating2 = ratings_for_year.at[team, col_name]
                 rating = (rating2 - rating1)
 
+                # phase 5 factors: various factors in team strength
+
+                # record in close games
+                wins1_close = 0
+                wins2_close = 0
+                games1_close = 0
+                games2_close = 0
+                for row2 in range(row-1): 
+                    if data.at[row2, 'Team'] == team1 and abs(data.at[row2, 'Final']-data.at[row2+1, 'Final'] < CLOSE_GAME_THRESHOLD): 
+                        games1_close += 1
+                        if row2%2 == 1: #row-1 is the other team
+                            if data.at[row2, 'Final'] > data.at[row2-1, 'Final']: 
+                                wins1_close += 1
+                        else: #row+1 is the other team
+                            if data.at[row2, 'Final'] > data.at[row2+1, 'Final']: 
+                                wins1_close += 1
+                    elif data.at[row2, 'Team'] == team2 and abs(data.at[row2, 'Final']-data.at[row2+1, 'Final'] < CLOSE_GAME_THRESHOLD): 
+                        games2_close += 1
+                        if row2%2 == 1: #row-1 is the other team
+                            if data.at[row2, 'Final'] > data.at[row2-1, 'Final']: 
+                                wins2_close += 1
+                        else: #row+1 is the other team
+                            if data.at[row2, 'Final'] > data.at[row2+1, 'Final']: 
+                                wins2_close += 1
+                if games1_close == 0: 
+                    win_pct_close1 = 0
+                else: 
+                    win_pct_close1 = wins1_close/games1_close
+                if games2_close == 0: 
+                    win_pct_close2 = 0
+                else: 
+                    win_pct_close2 = wins2_close/games2_close
+
+                # adjusted MOV 
+                mov_ratings_for_year = movs[year-1]
+                mov_a_h = 0
+                mov_a_a = 0
+                for team in range(mov_ratings_for_year.shape[0]): 
+                    if mov_ratings_for_year.at[team, 'Team'] == convert_team_name(team1, year-1): 
+                        mov_a_h = mov_ratings_for_year.at[team, 'MOV/A']
+                    elif mov_ratings_for_year.at[team, 'Team'] == convert_team_name(team2, year-1): 
+                        mov_a_a = mov_ratings_for_year.at[team, 'MOV/A']
+
                 # debugging
                 outlier = (team1 == "Brooklyn" and team2 == "Oklahoma City" and year == 2016) or (team1 == "Toronto" and team2 == "LA Clippers" and year == 2016)
 
                 #push
                 if not push and not outlier: 
-                    new_data.loc[len(new_data.index)] = [year, (1 if home_spread_hit else 0), total, spread, team1, team2, None, None, ppg1, ppg2, pace1, pace2, ortg1, ortg2, drtg1, drtg2, drb1, drb2, threePAR1, threePAR2, ts1, ts2, ftr1, ftr2, d_tov1, d_tov2, o_tov1, o_tov2, ftperfga1, ftperfga2, points_over_average_ratio1, points_over_average_ratio2, hotness_ratio1, hotness_ratio2, std_dev1, std_dev2, win_pct1, win_pct2, rsw1, rsw2, rating1, rating2]
+                    new_data.loc[len(new_data.index)] = [year, (1 if home_spread_hit else 0), total, spread, team1, team2, None, None, ppg1, ppg2, pace1, pace2, ortg1, ortg2, drtg1, drtg2, drb1, drb2, threePAR1, threePAR2, ts1, ts2, ftr1, ftr2, d_tov1, d_tov2, o_tov1, o_tov2, ftperfga1, ftperfga2, points_over_average_ratio1, points_over_average_ratio2, hotness_ratio1, hotness_ratio2, std_dev1, std_dev2, win_pct1, win_pct2, rsw1, rsw2, rating1, rating2, win_pct_close1, win_pct_close2, None, None, mov_a_h, mov_a_a]
 
                 # print("Data for " + team1 + " vs " + team2 + " in " + str(year))
     print("gathering spread percentage data for year " + str(year))
@@ -452,6 +500,27 @@ for yearOffset in range(10):
             pct_spreads_covered2 = float(spreadsCovered2)/float(totalGames2)
             new_data.at[row, 'pct_spreads_hit_h'] = pct_spreads_covered1
             new_data.at[row, 'pct_spreads_hit_a'] = pct_spreads_covered2
+
+    # strength of schedule
+    print("Calculating strength of schedule for year " + str(year))
+    for row in range(new_data.shape[0]): 
+        if row > ROW_START: 
+            home_sos_array = []
+            away_sos_array = []
+            for row2 in range(row-1): 
+                if new_data.at[row2, 'home_team'] == new_data.at[row, 'home_team']: 
+                    home_sos_array.append(new_data.at[row2, 'win_pct_a'])
+                elif new_data.at[row2, 'away_team'] == new_data.at[row, 'home_team']: 
+                    home_sos_array.append(new_data.at[row2, 'win_pct_h'])
+                elif new_data.at[row2, 'home_team'] == new_data.at[row, 'away_team']: 
+                    away_sos_array.append(new_data.at[row2, 'win_pct_a'])
+                elif new_data.at[row2, 'away_team'] == new_data.at[row, 'away_team']: 
+                    away_sos_array.append(new_data.at[row2, 'win_pct_h'])
+            sos_h = average(home_sos_array)
+            sos_a = average(away_sos_array)
+            new_data.at[row, 'sos_h'] = sos_h
+            new_data.at[row, 'sos_a'] = sos_a
+    
     total_data = pd.concat([total_data, new_data.iloc[(ROW_START+1):]], ignore_index=True)
     
 print(total_data)
