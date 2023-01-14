@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import os
 import math
 import numpy as np
+from datetime import date
 
 CURR_YEAR = 2023
 
@@ -491,3 +492,27 @@ for x in range(df.shape[0]):
     pct = str(over_prob*100) if letter=='o' else str(100-over_prob*100)
     if float(pct) > 53: 
         print(f'{away_team} at {home_team}: {letter}{str(total)} with probability {pct}%')
+
+print("Generating tweet...")
+top_bet_index = 0
+top_bet_pct = 0.0
+for x in range(df.shape[0]): 
+    total = df.at[x, 'total'] 
+    over_prob = df.at[x, 'calc_over_prob']
+    letter = 'o' if over_prob > 0.5 else 'u'
+    away_team = df.at[x, 'away_team']
+    home_team = df.at[x, 'home_team']
+    pct = str(over_prob*100) if letter=='o' else str(100-over_prob*100)
+    if float(pct) > top_bet_pct: 
+        top_bet_index = x
+today = date.today()
+x = top_bet_index
+total = df.at[x, 'total'] 
+over_prob = df.at[x, 'calc_over_prob']
+letter = 'o' if over_prob > 0.5 else 'u'
+away_team = df.at[x, 'away_team']
+home_team = df.at[x, 'home_team']
+pct = str(over_prob*100) if letter=='o' else str(100-over_prob*100)
+print(f"\nNBA Pick of the Day ({today.month}/{today.day}/{today.year}) for SportsNinja Stat Model v1.1: \n")
+print(f"{away_team} @ {home_team}: {letter}{str(total)} with a probability of {pct}%\n")
+print(f"Current Season Record for v1.1: 5-3")

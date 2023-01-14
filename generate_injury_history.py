@@ -33,6 +33,34 @@ def get_injury_data_raw():
         # print(injuryData)
         i += 1
 
+    # D2D INJURIES
+    i = 0
+    url = "https://www.prosportstransactions.com/basketball/Search/SearchResults.php?Player=&Team=&BeginDate=2013-06-01&EndDate=&InjuriesChkBx=yes&Submit=Search&start=0"
+    response = requests.get(url) 
+    soup = BeautifulSoup(response.content, 'html.parser')
+    table = soup.find('table')
+    injuryData = pd.read_html(str(table))[0]
+    injuryData = injuryData.drop([0])
+    injuryData = injuryData.reset_index(drop=True)
+    i += 1
+    total_data = pd.DataFrame()
+
+    while (not injuryData.empty): 
+
+        #add stuff to overall dataframe
+        total_data = pd.concat([total_data, injuryData], ignore_index=True)
+
+        url = f"https://www.prosportstransactions.com/basketball/Search/SearchResults.php?Player=&Team=&BeginDate=2013-06-01&EndDate=&InjuriesChkBx=yes&Submit=Search&start={str(i*25)}"
+        response = requests.get(url) 
+        soup = BeautifulSoup(response.content, 'html.parser')
+        table = soup.find('table')
+        injuryData = pd.read_html(str(table))[0]
+        injuryData = injuryData.drop([0])
+        injuryData = injuryData.reset_index(drop=True)
+        # injuryData.rename(columns={'0': 'Date', '1': 'Team', '2': 'Acquired', '3': 'Relinquished', '4': 'Notes'})
+        # print(injuryData)
+        i += 1
+
     total_data.columns = ['Date', 'Team', 'Acquired', 'Relinquished', 'Notes']
 
     print(total_data)
@@ -91,4 +119,5 @@ def get_injuries_by_date(inj_dict, date):
 
 df = pd.read_excel('./raw_injury_data.xlsx')
 injury_dict = process_injury_data(df)
-print(get_injuries_by_date(injury_dict, date.today()))
+print(injury_dict)
+print(get_injuries_by_date(injury_dict, datetime.date(2023, 1, 10)))
