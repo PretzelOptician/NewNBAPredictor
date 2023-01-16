@@ -37,7 +37,7 @@ def calc_std_dev(numbers):
 
   return std_dev
 
-def logit(df): 
+def logit_total(df): 
     # home_dummy = {
     #     'Atlanta': 0.0,
     #     'Boston': -0.0049771,
@@ -472,46 +472,71 @@ for game in odds:
         #last 3 vars: win_pct, rsw, rating
 
 print(total_data)
-total_data.to_excel("current_games.xlsx")
-df = logit(total_data)
-for x in range(df.shape[0]):
-    total = df.at[x, 'total'] 
-    over_prob = df.at[x, 'calc_over_prob']
+total_data.to_excel("current_games_total.xlsx")
+df_total = logit_total(total_data)
+# print(spread_data)
+# spread_data.to_excel("current_games_spread.xlsx")
+# df_spread = logit_spread(spread_data)
+for x in range(df_total.shape[0]):
+    total = df_total.at[x, 'total'] 
+    over_prob = df_total.at[x, 'calc_over_prob']
     letter = 'o' if over_prob > 0.5 else 'u'
-    away_team = df.at[x, 'away_team']
-    home_team = df.at[x, 'home_team']
+    away_team = df_total.at[x, 'away_team']
+    home_team = df_total.at[x, 'home_team']
     pct = str(over_prob*100) if letter=='o' else str(100-over_prob*100)
     print(f'{away_team} at {home_team}: {letter}{str(total)} with probability {pct}%')
+print("\n")
+#SPREAD
+# for x in range(df_spread.shape[0]): 
+#     spread = df_spread.at[x, 'spread']
+#     home_prob = df_spread.at[x, 'calc_home_prob']
+#     away_team = df_spread.at[x, 'away_team']
+#     home_team = df_spread.at[x, 'home_team']
+#     cover = home_team if home_prob > 0.5 else away_team
+#     pct = str(home_prob*100) if cover == home_team else str(100-home_prob*100)
+#     pm = '-' if (spread < 0 and cover == home_team) or (spread > 0 and cover==away_team) else '+'
+#     print(f'{away_team} at {home_team}: {pm}{str(abs(spread))} {cover} with probability {pct}%')
 print("\n Bets greater than 53%: ")
-for x in range(df.shape[0]): 
-    total = df.at[x, 'total'] 
-    over_prob = df.at[x, 'calc_over_prob']
+for x in range(df_total.shape[0]): 
+    total = df_total.at[x, 'total'] 
+    over_prob = df_total.at[x, 'calc_over_prob']
     letter = 'o' if over_prob > 0.5 else 'u'
-    away_team = df.at[x, 'away_team']
-    home_team = df.at[x, 'home_team']
+    away_team = df_total.at[x, 'away_team']
+    home_team = df_total.at[x, 'home_team']
     pct = str(over_prob*100) if letter=='o' else str(100-over_prob*100)
     if float(pct) > 53: 
         print(f'{away_team} at {home_team}: {letter}{str(total)} with probability {pct}%')
+# for x in range(df_spread.shape[0]): 
+#     spread = df_spread.at[x, 'spread']
+#     home_prob = df_spread.at[x, 'calc_home_prob']
+#     away_team = df_spread.at[x, 'away_team']
+#     home_team = df_spread.at[x, 'home_team']
+#     cover = home_team if home_prob > 0.5 else away_team
+#     pct = str(home_prob*100) if cover == home_team else str(100-home_prob*100)
+#     pm = '-' if (spread < 0 and cover == home_team) or (spread > 0 and cover==away_team) else '+'
+#     if float(pct) > 53: 
+#         print(f'{away_team} at {home_team}: {pm}{str(abs(spread))} {cover} with probability {pct}%')
 
+#EDIT THIS TO INCLUDE SPREADS
 print("Generating tweet...")
 top_bet_index = 0
 top_bet_pct = 0.0
-for x in range(df.shape[0]): 
-    total = df.at[x, 'total'] 
-    over_prob = df.at[x, 'calc_over_prob']
+for x in range(df_total.shape[0]): 
+    total = df_total.at[x, 'total'] 
+    over_prob = df_total.at[x, 'calc_over_prob']
     letter = 'o' if over_prob > 0.5 else 'u'
-    away_team = df.at[x, 'away_team']
-    home_team = df.at[x, 'home_team']
+    away_team = df_total.at[x, 'away_team']
+    home_team = df_total.at[x, 'home_team']
     pct = str(over_prob*100) if letter=='o' else str(100-over_prob*100)
     if float(pct) > top_bet_pct: 
         top_bet_index = x
 today = date.today()
 x = top_bet_index
-total = df.at[x, 'total'] 
-over_prob = df.at[x, 'calc_over_prob']
+total = df_total.at[x, 'total'] 
+over_prob = df_total.at[x, 'calc_over_prob']
 letter = 'o' if over_prob > 0.5 else 'u'
-away_team = df.at[x, 'away_team']
-home_team = df.at[x, 'home_team']
+away_team = df_total.at[x, 'away_team']
+home_team = df_total.at[x, 'home_team']
 pct = str(over_prob*100) if letter=='o' else str(100-over_prob*100)
 print(f"\nNBA Pick of the Day ({today.month}/{today.day}/{today.year}) for SportsNinja Stat Model v1.1: \n")
 print(f"{away_team} @ {home_team}: {letter}{str(total)} with a probability of {pct}%\n")

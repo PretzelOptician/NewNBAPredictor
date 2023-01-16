@@ -27,22 +27,13 @@ def get_roster(team, year):
         name = roster.at[row, 'Player']
         dob = string_to_datetime(roster.at[row, 'Birth Date']).date()
         urls.append(get_player_profile_url(name, dob))
-        time.sleep(2)
+        time.sleep(3)
     roster['bbref url'] = urls
     return roster
 
 def get_roster_excel(team, year): 
     df = pd.read_excel(f"./rosters/{year}/{team}.xlsx")
     return df
-
-#not necessary
-def get_rosters(team1, team2, date): 
-    if date.month > 9 or date.month == 9 and date.day > 14: 
-        season = date.year+1
-    else: 
-        season = date.year 
-    unprocessed_roster_1 = get_roster_excel(team1, season)
-    unprocessed_roster_2 = get_roster_excel(team2, season)
 
 
 # dob: date of birth, should be date object
@@ -52,7 +43,6 @@ def get_player_profile_url(name, dob):
     name = name.replace(".", "").replace("'", "")
     i = 1
     names_list = name.split(' ')
-    base_string = (unidecode(names_list[1][0:5]) + unidecode(names_list[0][0:2])).lower()
     if name == "Clint Capela": base_string = "capelca"
     elif name == "Edy Tavares": base_string = "tavarwa"
     elif unidecode(name) == "Vitor Luiz Faverani": base_string = "favervi"
@@ -61,8 +51,34 @@ def get_player_profile_url(name, dob):
     elif name == "Michael Kidd-Gilchrist": base_string = "kiddgmi"
     elif name == "Mo Williams": base_string = "willima"
     elif name == "Cedi Osman": base_string = "osmande"
-    if name == "PJ Hairston": 
+    elif name == "JJ Barea": base_string = "bareajo"
+    elif name == "Maxi Kleber": base_string = "klebima"
+    elif name == "Frank Ntilikina": base_string = "ntilila"
+    elif name == "James Michael McAdoo": base_string = "mcadoja"
+    elif unidecode(name) == "Nene": base_string = "hilarne"
+    elif name == "Luc Mbah a Moute": base_string = "mbahalu"
+    elif name == "Jeff Ayres": base_string = "pendeje"
+    elif name == "Metta World Peace": base_string = "artesro"
+    elif name == "Henry Walker": base_string = "walkebi"
+    elif name == "Didi Louzada": base_string = "louzama"
+    elif name == "Nando De Colo": base_string = "decolna"
+    elif unidecode(name) == "Tibor Pleiss": base_string = "pleisti"
+    elif name == "Sheldon Mac": base_string = "mcclesh"
+    else: base_string = (unidecode(names_list[1][0:5]) + unidecode(names_list[0][0:2])).lower()
+    if name == "PJ Hairston" or name == "Markus Howard" or name == "Xavier Munford" or name == "Killian Tillie": 
         url = f"https://www.basketball-reference.com/players/{base_string[0]}/{base_string}02.html"
+    elif name == "George King" or name == "Brandon Williams": 
+        url = f"https://www.basketball-reference.com/players/{base_string[0]}/{base_string}03.html"
+    elif name == "Jalen Jones" or name == "Jalen Smith": 
+        url = f"https://www.basketball-reference.com/players/{base_string[0]}/{base_string}04.html"
+    elif name == "Jalen Green" or name == "Jabari Smith Jr": 
+        url = f"https://www.basketball-reference.com/players/{base_string[0]}/{base_string}05.html"
+    elif name == "Johnny Davis": 
+        url = f"https://www.basketball-reference.com/players/{base_string[0]}/{base_string}06.html"
+    elif name == "Jaylin Williams": 
+        url = f"https://www.basketball-reference.com/players/{base_string[0]}/{base_string}07.html"
+    elif name == "David Johnson": 
+        url = f"https://www.basketball-reference.com/players/{base_string[0]}/{base_string}08.html"
     else: 
         url = f"https://www.basketball-reference.com/players/{base_string[0]}/{base_string}01.html"
     response = requests.get(url)
@@ -97,10 +113,13 @@ def get_player_profile_url(name, dob):
 def get_player_game_log(bbref_url, season): 
     #in caller function, make sure that a game log doesn't already exist.
     #remove last 5 characters from bbref_url. 
-    #add '/gamelog/{season}' to string
-    #get table on page and convert to dataframe
+    game_log_url = bbref_url[:-5] + f"/gamelog/{season}"
+    response = requests.get(game_log_url)
+    soup = BeautifulSoup(response.content, 'html.parser')
+    table = soup.find('table')
+    df = pd.read_html(str(table))[0]
     #check which teams this player played for this season ('Tm' column in dataframe). put game logs in all the appropriate folders. 
-    return
+    return df
 
 #STUB: get the player game log for a player during that season from local files
 def get_player_game_log_excel(player, team, season): 
@@ -189,11 +208,15 @@ def get_injuries_for_team(team, date):
         player_game_log = get_player_game_log_excel(name, team, season)
         injured = False
         for row2 in range(player_game_log.shape[0]): 
-            #get date of the row and turn it to variable "date_of_game"
+            date_string = str(player_game_log.at[row2, 'Date'])
+            date_list = date_string.split(' ')[0].split('-')
+            date_of_game = datetime.date(int(date_list[0]), int(date_list[1]), int(date_list[2]))
+            # print(date_of_game)
             if date_of_game == date: 
                 # if 'inactive', set injured to True
-                print(injured)
-            else: 
+                # print(df.at[row2, 'GS'])
+                if player_game_log .at[row2, 'GS'] == "Inactive": 
+                    injured = True
                 break
         if injured: 
             injured_list.append(name)

@@ -2,6 +2,8 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 import os
+import datetime
+from datetime import date
 
 team_names = [ "Atlanta", "Boston", "Brooklyn", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"]
 
@@ -95,4 +97,27 @@ def get_pct_overs_hit(team1, team2):
     pct = (home_pct + away_pct)/2
     return pct
 
-print(get_pct_overs_hit("LA Lakers", "LA Clippers"))
+df = pd.read_excel('./test.xlsx')
+# print(df.at[1, 'GS'])
+date = datetime.date(2022, 10, 25)
+injured = False
+# print(df.shape[0])
+for row2 in range(df.shape[0]): 
+    # print("what")
+    #get date of the row and turn it to variable "date_of_game"
+    date_string = str(df.at[row2, 'Date'])
+    date_list = date_string.split(' ')[0].split('-')
+    date_of_game = datetime.date(int(date_list[0]), int(date_list[1]), int(date_list[2]))
+    # print(date_of_game)
+    if date_of_game == date: 
+        # if 'inactive', set injured to True
+        # print(df.at[row2, 'GS'])
+        if df.at[row2, 'GS'] == "Inactive": 
+            injured = True
+        break
+gmsc_sum = 0
+for row2 in range(df.shape[0]): 
+    gamescore = df.at[row2, 'GmSc']
+    if gamescore < 0 or gamescore > 0: 
+        gmsc_sum += gamescore
+    print(gmsc_sum)
