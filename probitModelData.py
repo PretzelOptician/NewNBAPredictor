@@ -2,6 +2,9 @@ import pandas as pd
 from bs4 import BeautifulSoup
 import requests
 import math
+import datetime
+from datetime import date
+from injuryv2 import *
 
 ROW_START = 150
 ROW_PLAYOFFS = 0
@@ -161,8 +164,18 @@ def get_ratings(year):
     df = pd.read_excel(filepath)
     return df
 
+def convert_date(date_string, season): 
+    date_string = str(date_string)
+    day = int(date_string[-2:])
+    month = int(date_string[:-2])
+    if month <= 9:
+        year = season
+    else: 
+        year = season-1
+    return datetime.date(year, month, day)
+
 pd.set_option('display.max_rows', None)
-total_data = pd.DataFrame({'year': [], 'hitOver': [], 'total': [], 'avg_popularity': [], 'totalppg': [], 'size_of_spread': [], 'home_team': [], 'away_team': [], 'pct_overs_hit': [], 'pace': [], 'ortg': [], 'drtg': [], 'drb': [], 'threePAR': [], 'ts': [], 'ftr': [], 'd_tov': [], 'o_tov': [], 'ftperfga': [], 'points_over_average_ratio': [], 'hotness_ratio': [], 'std_dev': [], 'win_pct': [], 'rsw': [], 'ratings_2k': []})
+total_data = pd.DataFrame({'year': [], 'hitOver': [], 'total': [], 'avg_popularity': [], 'totalppg': [], 'size_of_spread': [], 'home_team': [], 'away_team': [], 'pct_overs_hit': [], 'pace': [], 'ortg': [], 'drtg': [], 'drb': [], 'threePAR': [], 'ts': [], 'ftr': [], 'd_tov': [], 'o_tov': [], 'ftperfga': [], 'points_over_average_ratio': [], 'hotness_ratio': [], 'std_dev': [], 'win_pct': [], 'rsw': [], 'ratings_2k': [], 'injury_gmsc': [], 'injury_mins': []})
 
 team_names = [ "Atlanta", "Boston", "Brooklyn", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"]
 
@@ -211,9 +224,10 @@ for yearOffset in range(10):
     # leagueData = leagueData.drop(['Unnamed: 0_level_0'], axis=1)
 
     data = pd.read_excel('../NBA-Spreadsheets/' + str(year) + '/oddsStats.xlsx')
-    new_data = pd.DataFrame({'year': [], 'hitOver': [], 'total': [], 'avg_popularity': [], 'totalppg': [], 'size_of_spread': [], 'home_team': [], 'away_team': [], 'pct_overs_hit': [], 'pace': [], 'ortg': [], 'drtg': [], 'drb': [], 'threePAR': [], 'ts': [], 'ftr': [], 'd_tov': [], 'o_tov': [], 'ftperfga': [], 'points_over_average_ratio': [], 'hotness_ratio': [], 'std_dev': [], 'win_pct': [], 'rsw': [], 'ratings_2k': []})
+    new_data = pd.DataFrame({'year': [], 'hitOver': [], 'total': [], 'avg_popularity': [], 'totalppg': [], 'size_of_spread': [], 'home_team': [], 'away_team': [], 'pct_overs_hit': [], 'pace': [], 'ortg': [], 'drtg': [], 'drb': [], 'threePAR': [], 'ts': [], 'ftr': [], 'd_tov': [], 'o_tov': [], 'ftperfga': [], 'points_over_average_ratio': [], 'hotness_ratio': [], 'std_dev': [], 'win_pct': [], 'rsw': [], 'ratings_2k': [], 'injury_gmsc': [], 'injury_mins': []})
     for row in range(data.shape[0]): 
         if row%2==1: 
+            print(f"{str(100*float(row/data.shape[0]))}% through the {str(year)} season...")
 
             # phase 1 factors: basic numbers
 
@@ -453,12 +467,23 @@ for yearOffset in range(10):
                         rating2 = ratings_for_year.at[team, col_name]
                 rating = (rating1 + rating2)/2
 
+                # injuries (gmsc)
+                date_of_game = convert_date(data.at[row, 'Date'], year)
+                injury_gmsc1 = get_gmsc_injured(team_name_mapping.get(team1, team1), date_of_game)
+                injury_gmsc2 = get_gmsc_injured(team_name_mapping.get(team2, team2), date_of_game)
+                injury_gmsc = (injury_gmsc1 + injury_gmsc2)/2
+
+                # injuries (mins)
+                injury_mins1 = get_mins_injured(team_name_mapping.get(team1, team1), date_of_game)
+                injury_mins2 = get_mins_injured(team_name_mapping.get(team2, team2), date_of_game)
+                injury_mins = (injury_mins1 + injury_mins2)/2
+
                 # debugging
                 outlier = (team1 == "Brooklyn" and team2 == "Oklahoma City" and year == 2016) or (team1 == "Toronto" and team2 == "LA Clippers" and year == 2016)
 
                 #push
                 if not push and not outlier: 
-                    new_data.loc[len(new_data.index)] = [year, (1 if hitOver else 0), total, avg_followers, totalppg, size_of_spread, team1, team2, None, pace, ortg, drtg, drb, threePAR, ts, ftr, d_tov, o_tov, ftperfga, points_over_average_ratio, hotness_ratio, std_dev, win_pct, rsw, rating]
+                    new_data.loc[len(new_data.index)] = [year, (1 if hitOver else 0), total, avg_followers, totalppg, size_of_spread, team1, team2, None, pace, ortg, drtg, drb, threePAR, ts, ftr, d_tov, o_tov, ftperfga, points_over_average_ratio, hotness_ratio, std_dev, win_pct, rsw, rating, injury_gmsc, injury_mins]
 
                 # print("Data for " + team1 + " vs " + team2 + " in " + str(year))
     print("gathering over percentage data for year " + str(year))
@@ -476,7 +501,8 @@ for yearOffset in range(10):
                     oversHit += new_data.at[row2, 'hitOver']
             pct_overs_hit = float(oversHit)/float(totalGames)
             new_data.at[row, 'pct_overs_hit'] = pct_overs_hit
+    new_data.to_excel(f"{year}_total_data.xlsx")
     total_data = pd.concat([total_data, new_data.iloc[(ROW_START+1):]], ignore_index=True)
     
 print(total_data)
-total_data.to_excel("probit_data.xlsx")
+total_data.to_excel("total_data.xlsx")

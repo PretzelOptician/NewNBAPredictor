@@ -4,8 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 import datetime
 from datetime import date
-from datetime import datetime
-import calendar
+# from datetime import datetime
 from unidecode import unidecode
 import time
 
@@ -32,7 +31,7 @@ def get_roster(team, year):
     return roster
 
 def get_roster_excel(team, year): 
-    df = pd.read_excel(f"./rosters/{year}/{team}.xlsx")
+    df = pd.read_excel(f"./rosters/{year}/{team}/{team}.xlsx")
     return df
 
 
@@ -112,12 +111,14 @@ def get_player_profile_url(name, dob):
 ## REMEMBER TO ANGLICIZE FOREIGN NAMES (unidecode)
 def get_player_game_log(bbref_url, season): 
     #in caller function, make sure that a game log doesn't already exist.
-    #remove last 5 characters from bbref_url. 
     game_log_url = bbref_url[:-5] + f"/gamelog/{season}"
     response = requests.get(game_log_url)
     soup = BeautifulSoup(response.content, 'html.parser')
-    table = soup.find('table')
+    table = soup.find('table', id='pgl_basic')
     df = pd.read_html(str(table))[0]
+    df['Rk_num'] = pd.to_numeric(df['Rk'], errors='coerce')
+    df = df[df['Rk_num'].notnull()]
+    df = df.reset_index(drop=True)
     #check which teams this player played for this season ('Tm' column in dataframe). put game logs in all the appropriate folders. 
     return df
 
@@ -203,7 +204,6 @@ def get_injuries_for_team(team, date):
     roster = get_roster_excel(team, season)
     injured_list = []
     for row in range(roster.shape[0]): 
-        bbref_url = roster.at[row, 'bbref url']
         name = unidecode(roster.at[row, 'Player'])
         player_game_log = get_player_game_log_excel(name, team, season)
         injured = False
@@ -215,49 +215,213 @@ def get_injuries_for_team(team, date):
             if date_of_game == date: 
                 # if 'inactive', set injured to True
                 # print(df.at[row2, 'GS'])
-                if player_game_log .at[row2, 'GS'] == "Inactive": 
+                if player_game_log .at[row2, 'GS'] == "Inactive" or player_game_log .at[row2, 'GS'] == "Not With Team" or player_game_log .at[row2, 'GS'] == "Did Not Dress": 
                     injured = True
                 break
         if injured: 
             injured_list.append(name)
     return injured_list
 
-def get_pcts_injured(team, date): 
+def abrv_to_city(team_code, season): 
+    team_names = [ "Atlanta", "Boston", "Brooklyn", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"]
+    team_abbrvs = {'pre2015': ['ATL', 'BOS', 'BRK', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOP', 'NYK', 'OKC', 'ORL', 'PHI', 'PHO', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS'], 'post2015': ['ATL', 'BOS', 'BRK', 'CHO', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOP', 'NYK', 'OKC', 'ORL', 'PHI', 'PHO', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS']}
+    if season < 2015: 
+        index = 31
+        for abbr in range(len(team_abbrvs['pre2015'])): 
+            if team_code == team_abbrvs['pre2015'][abbr]: 
+                index = abbr
+                break
+    else: 
+        index = 31
+        for abbr in range(len(team_abbrvs['post2015'])): 
+            if team_code == team_abbrvs['post2015'][abbr]: 
+                index = abbr
+                break
+    return team_names[index]
+
+def get_total_gmsc_during_date(team, date_beg, date_end): 
+    if date_beg.month > 9 or date_beg.month == 9 and date_beg.day > 14: 
+        season = date_beg.year+1
+    else: 
+        season = date_beg.year 
+    total_gmsc = 0 
+    roster = get_roster_excel(team, season)
+    for row in range(roster.shape[0]): 
+        player = unidecode(roster.at[row, 'Player'])
+        player_game_log = get_player_game_log_excel(player, team, season)
+        #all the following for loop does is check that a) the player is on the team during a game and b) the game is between the given dates and if those two are true it adds the game score to the running total
+        for row2 in range(player_game_log.shape[0]):
+            if abrv_to_city(player_game_log.at[row2, 'Tm'], season) == team: 
+                date_string = str(player_game_log.at[row2, 'Date'])
+                date_list = date_string.split(' ')[0].split('-')
+                date_of_game = datetime.date(int(date_list[0]), int(date_list[1]), int(date_list[2])) 
+                if date_of_game < date_end and date_of_game >= date_beg: 
+                    try: 
+                        gamescore = float(player_game_log.at[row2, 'GmSc'])
+                        if gamescore < 0 or gamescore > 0: 
+                            total_gmsc += gamescore
+                    except ValueError:
+                        gamescore = 0
+                else: 
+                    break
+    return total_gmsc
+
+def get_gmsc_injured(team, date): 
     if date.month > 9 or date.month == 9 and date.day > 14: 
         season = date.year+1
     else: 
         season = date.year 
     injured_players = get_injuries_for_team(team, date)
-    team_contribution_sum = 0
+    # print("Injuries for team: ")
+    # print(injured_players)
+    total_ratio = 0
     for player in injured_players: 
         player_game_log = get_player_game_log_excel(player, team, season)
-        # sum up all points, rebounds, assists, steals, and blocks up to that point from when player has been on the team. 
-        # sum up all team's points, rebounds, assists, steals, and blocks during the time that the player has been on the team and playing. 
-        # average all of these ratios to get a general team contribution score and add this to the running total. 
-    return team_contribution_sum
+        time_on_team = {}
+        on_team = False
+        gmsc_on_team = 0
+        for row in range(player_game_log.shape[0]): 
+            date_string = str(player_game_log.at[row, 'Date'])
+            date_list = date_string.split(' ')[0].split('-')
+            date_of_game = datetime.date(int(date_list[0]), int(date_list[1]), int(date_list[2])) 
+            if date_of_game < date: 
+                if abrv_to_city(player_game_log.at[row, 'Tm'], season) == team: 
+                    if not on_team: 
+                        on_team = True
+                        time_on_team[len(time_on_team)] = {'start': date_of_game, 'end': None}
+                    try: 
+                        gamescore = float(player_game_log.at[row, 'GmSc'])
+                        if gamescore < 0 or gamescore > 0: 
+                            gmsc_on_team += gamescore
+                    except ValueError:
+                        gamescore = 0
+                elif abrv_to_city(player_game_log.at[row, 'Tm'], season) != team and on_team: 
+                    on_team = False
+                    time_on_team[len(time_on_team)-1]['end'] = date_of_game
+            else: 
+                break
+        # print("Time on team for player " + player + " during " + str(season) + " for team " + team)
+        # print(time_on_team)
+        total_gmsc_while_on_team = 0
+        for stretch in range(len(time_on_team)): 
+            start_date = time_on_team[stretch]['start']
+            end_date = time_on_team[stretch]['end']
+            if end_date == None: end_date = date
+            total_gmsc_while_on_team += get_total_gmsc_during_date(team, start_date, end_date)
+        if total_gmsc_while_on_team > 0: 
+            ratio = gmsc_on_team/total_gmsc_while_on_team
+        else: ratio = 0
+        total_ratio += ratio
+    return total_ratio
+
+def get_mins_injured(team, date): 
+    if date.month > 9 or date.month == 9 and date.day > 14: 
+        season = date.year+1
+    else: 
+        season = date.year 
+    injured_players = get_injuries_for_team(team, date)
+    # print("Injuries for team: ")
+    # print(injured_players)
+    total_ratio = 0
+    for player in injured_players: 
+        player_game_log = get_player_game_log_excel(player, team, season)
+        time_on_team = {}
+        on_team = False
+        mins_on_team = 0
+        gp_on_team = 0
+        for row in range(player_game_log.shape[0]): 
+            date_string = str(player_game_log.at[row, 'Date'])
+            date_list = date_string.split(' ')[0].split('-')
+            date_of_game = datetime.date(int(date_list[0]), int(date_list[1]), int(date_list[2])) 
+            if date_of_game < date: 
+                if abrv_to_city(player_game_log.at[row, 'Tm'], season) == team: 
+                    gp_on_team += 1
+                    if not on_team: 
+                        on_team = True
+                        time_on_team[len(time_on_team)] = {'start': date_of_game, 'end': None}
+                    try: 
+                        minutes_list = player_game_log.at[row, 'MP'].split(':')
+                        minutes = float(minutes_list[0]) + (float(minutes_list[1])/60)
+                        mins_on_team += minutes
+                    except ValueError:
+                        minutes = 0
+                elif abrv_to_city(player_game_log.at[row, 'Tm'], season) != team and on_team: 
+                    on_team = False
+                    time_on_team[len(time_on_team)-1]['end'] = date_of_game
+            else: 
+                break
+        # print("Time on team for player " + player + " during " + str(season) + " for team " + team)
+        # print(time_on_team)
+        # print(mins_on_team)
+        total_mins_while_on_team = gp_on_team * 240
+        if total_mins_while_on_team > 0: 
+            ratio = mins_on_team/total_mins_while_on_team
+        else: ratio = 0
+        total_ratio += ratio
+    return total_ratio
+
+def get_current_injuries(team): 
+    injured_players = []
+    team_names = ["Atlanta Hawks", "Boston Celtics", "Brooklyn Nets", "Charlotte Hornets", "Chicago Bulls", "Cleveland Cavaliers", "Dallas Mavericks", "Denver Nuggets", "Detroit Pistons", "Golden State Warriors", "Houston Rockets", "Indiana Pacers", "Los Angeles Clippers", "Los Angeles Lakers", "Memphis Grizzlies", "Miami Heat", "Milwaukee Bucks", "Minnesota Timberwolves", "New Orleans Pelicans", "New York Knicks", "Oklahoma City Thunder", "Orlando Magic", "Philadelphia 76ers", "Phoenix Suns", "Portland Trail Blazers", "Sacramento Kings", "San Antonio Spurs", "Toronto Raptors", "Utah Jazz", "Washington Wizards"]
+    team_abbrvs = ['ATL', 'BOS', 'BKN', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOP', 'NYK', 'OKC', 'ORL', 'PHI', 'PHX', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS']
+    index = 31
+    for x in range(len(team_names)): 
+        if team_names[x] == team: 
+            index = x
+    abrv = team_abbrvs[index]
+    url = f"https://www.rotowire.com/basketball/tables/injury-report.php?team={abrv}&pos=ALL"
+    response = requests.get(url) 
+    json = response.json()
+    for x in range(len(json)): 
+        if json[x]['status'] == 'Out': 
+            injured_players.append(json[x]['player'])
+    return injured_players
 
 team_names = [ "Atlanta", "Boston", "Brooklyn", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"]
+team_abbrvs = {'pre2015': ['ATL', 'BOS', 'BRK', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOP', 'NYK', 'OKC', 'ORL', 'PHI', 'PHO', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS'], 'post2015': ['ATL', 'BOS', 'BRK', 'CHO', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOP', 'NYK', 'OKC', 'ORL', 'PHI', 'PHO', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS']}
 years = range(2014, 2024)
 
-for team in team_names:
-    for year in years:
-        # Construct the file path for the game log file
-        file_path = f'./rosters/{year}/{team}/{team}.xlsx'
+# print(get_mins_injured("LA Lakers", datetime.date(2023, 1, 12)))
 
-        # Check if the file already exists
-        if not os.path.exists(file_path):
-            # Generate the game log dataframe
-            roster = get_roster(team, year)
+# for team_name in team_names:
+#     for year in years:
+#         roster = pd.read_excel(f'./rosters/{year}/{team_name}/{team_name}.xlsx')
+#         # Construct the file path for the game log file
+#         for row in range(roster.shape[0]): 
 
-            # Create the directory for the year if it doesn't exist
-            year_dir = f'./rosters/{year}'
-            if not os.path.exists(year_dir):
-                os.makedirs(year_dir)
+#             name = unidecode(roster.at[row, 'Player'])
+#             bbref_url = roster.at[row, 'bbref url']
 
-            # Create the directory for the team if it doesn't exist
-            team_dir = f'./rosters/{year}/{team}'
-            if not os.path.exists(team_dir): 
-                os.makedirs(team_dir)
+#             file_path = f'./rosters/{year}/{team_name}/{name}.xlsx'
 
-            # Save the game log dataframe to a .xlsx file
-            roster.to_excel(file_path)
+#             # Check if the file already exists
+#             if not os.path.exists(file_path) and not (name == "Ty Lawson" and team_name == "Washington"):
+#                 # Generate the game log dataframe
+#                 print("Generating game log for " + name + " in year " + str(year) + " for team " + team_name)
+#                 game_log = get_player_game_log(bbref_url, year)
+#                 time.sleep(2)
+#                 print("Generated game log for " + name + " in year " + str(year) + " for team " + team_name)
+                
+#                 teams_played_for = []
+#                 for row2 in range(game_log.shape[0]): 
+#                     team = game_log.at[row2, 'Tm']
+#                     if team not in teams_played_for: 
+#                         teams_played_for.append(team)
+
+#                 for team in teams_played_for: 
+#                     print(team)
+#                     if year < 2015: 
+#                         index = 31
+#                         for abbr in range(len(team_abbrvs['pre2015'])): 
+#                             if team == team_abbrvs['pre2015'][abbr]: 
+#                                 index = abbr
+#                                 break
+#                     else: 
+#                         index = 31
+#                         for abbr in range(len(team_abbrvs['post2015'])): 
+#                             if team == team_abbrvs['post2015'][abbr]: 
+#                                 index = abbr
+#                                 break
+#                     file_path = f'./rosters/{year}/{team_names[index]}/{name}.xlsx'
+#                     if not os.path.exists(file_path):
+#                             game_log.to_excel(file_path)

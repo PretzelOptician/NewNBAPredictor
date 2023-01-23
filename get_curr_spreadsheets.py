@@ -5,8 +5,12 @@ import os
 import math
 import numpy as np
 from datetime import date
+from tweet_generator import *
+from injuryv2 import *
+from unidecode import unidecode
 
 CURR_YEAR = 2023
+CLOSE_GAME_THRESHOLD = 6
 
 pd.set_option('display.max_rows', None)
 
@@ -37,72 +41,7 @@ def calc_std_dev(numbers):
 
   return std_dev
 
-def logit_total(df): 
-    # home_dummy = {
-    #     'Atlanta': 0.0,
-    #     'Boston': -0.0049771,
-    #     'Brooklyn': -0.0976231,
-    #     'Charlotte': -0.1616863,
-    #     'Chicago': -0.1792073,
-    #     'Cleveland': -0.09652,
-    #     'Dallas': -0.1852565, 
-    #     'Denver': 0.1810079, 
-    #     'Detroit': 0.1986823,
-    #     'GoldenState': -0.255966,
-    #     'Houston': 0.0367426, 
-    #     'Indiana': -0.0293679, 
-    #     'LAClippers': -0.065803, 
-    #     'LALakers': -0.2043106, 
-    #     'Memphis': -0.1364876, 
-    #     'Miami': 0.0986813, 
-    #     'Milwaukee': 0.0950917, 
-    #     'Minnesota': 0.1531429,
-    #     'NewOrleans': 0.3482693, 
-    #     'NewYork': -0.1498722, 
-    #     'OklahomaCity': -0.0853131, 
-    #     'Orlando': 0.0034486, 
-    #     'Philadelphia': 0.0431477, 
-    #     'Phoenix': 0.1017284, 
-    #     'Portland': 0.045715, 
-    #     'Sacramento': 0.1420166, 
-    #     'SanAntonio': 0.0354622, 
-    #     'Toronto': 0.0958902, 
-    #     'Utah': -0.2651519, 
-    #     'Washington': 0.1219588, 
-    # }
-    # away_dummy = {
-    #     'Atlanta': 0.0,
-    #     'Boston': 0.082884,
-    #     'Brooklyn': 0.0886438,
-    #     'Charlotte': 0.1817,
-    #     'Chicago': -0.0423023,
-    #     'Cleveland': 0.1211452,
-    #     'Dallas': -0.0623778, 
-    #     'Denver': 0.1134192, 
-    #     'Detroit': -0.133122,
-    #     'GoldenState': -0.2301149,
-    #     'Houston': -0.0220769, 
-    #     'Indiana': 0.0618522, 
-    #     'LAClippers': 0.0357576, 
-    #     'LALakers': 0.1241524, 
-    #     'Memphis': 0.0785158, 
-    #     'Miami': -0.1313578, 
-    #     'Milwaukee': 0.1319199, 
-    #     'Minnesota': 0.3885524,
-    #     'NewOrleans': 0.0353463, 
-    #     'NewYork': 0.042184, 
-    #     'OklahomaCity': -0.0733661, 
-    #     'Orlando': -0.1777448, 
-    #     'Philadelphia': -0.1730964, 
-    #     'Phoenix': 0.0218554, 
-    #     'Portland': 0.2001103, 
-    #     'Sacramento': 0.0612493, 
-    #     'SanAntonio': 0.1352708, 
-    #     'Toronto': 0.1909384, 
-    #     'Utah': -0.1020129, 
-    #     'Washington': 0.2796706,
-    # }
-    
+def logit_total(df):     
     #chatGPT code:: 
     # Extract the relevant columns from the dataframe
     X = df[['total', 'size_of_spread', 'pct_overs_hit', 'ortg', 'drtg', 'drb', 'threePAR', 'ts', 'ftr', 'points_over_average_ratio', 'hotness_ratio', 'std_dev']]
@@ -110,47 +49,37 @@ def logit_total(df):
     X['intercept'] = 4.644535
     coefs = [0.0040295, 0.0120225, -0.392392, 0.028596,  -0.0214184, -0.0128709, 0.8110862, -6.346099, -0.7018032, -2.42325, 0.5000966, 0.0161823, 1]
     z = np.dot(X, coefs)
-    # for game in range(len(z)): 
-    #     home_dummy_val = home_dummy.get(df.at[game, 'home_team'])
-    #     away_dummy_val = away_dummy.get(df.at[game, 'away_team'])
-    #     z[game] += (home_dummy_val + away_dummy_val)
     prob = 1 / (1 + np.exp(-z))
     # Calculate the probability using the sigmoid function
-    #THIS ALL WORKS LMAO
     df['calc_over_prob'] = prob
     return df
 
-def get_avg_followers(team): 
-    if team == 'LALakers' or team == 'LA Lakers' or team == 'Los Angeles Lakers': return 52321433
-    elif team == 'Cleveland' or team == 'Cleveland Cavaliers': return 23853389
-    elif team == 'Boston' or team == 'Boston Celtics': return 19952367
-    elif team == 'Milwaukee' or team == 'Milwaukee Bucks': return 10288717
-    elif team == 'Chicago' or team == 'Chicago Bulls': return 30435628
-    elif team == 'Portland' or team == 'Portland Trail Blazers': return 7117111
-    elif team == 'Toronto' or team == 'Toronto Raptors': return 8798856
-    elif team == 'Philadelphia' or team == 'Philadelphia 76ers': return 7925637
-    elif team == 'Atlanta' or team == 'Atlanta Hawks': return 5635700
-    elif team == 'Orlando' or team == 'Orlando Magic': return 6161629
-    elif team == 'Brooklyn' or team == 'Brooklyn Nets': return 9902212
-    elif team == 'Washington' or team == 'Washington Wizards': return 8209114
-    elif team == 'Miami' or team == 'Miami Heat': return 25825318
-    elif team == 'NewYork' or team == 'New York Knicks': return 11755482
-    elif team == 'Indiana' or team == 'Indiana Pacers': return 6768683
-    elif team == 'Detroit' or team == 'Detroit Pistons': return 4443090
-    elif team == 'OklahomaCity' or team == 'Oklahoma City' or team == 'Oklahoma City Thunder': return 14379492
-    elif team == 'Sacramento' or team == 'Sacramento Kings': return 10624663
-    elif team == 'Minnesota' or team == 'Minnesota Timberwolves': return 5790088
-    elif team == 'Phoenix' or team == 'Phoenix Suns': return 6479573
-    elif team == 'SanAntonio' or team == 'San Antonio' or team == 'San Antonio Spurs': return 14554210
-    elif team == 'Memphis' or team == 'Memphis Grizzlies': return 5430199
-    elif team == 'Denver' or team == 'Denver Nuggets': return 5618580
-    elif team == 'Houston' or team == 'Houston Rockets': return 25544036
-    elif team == 'Utah' or team == 'Utah Jazz': return 8164010
-    elif team == 'NewOrleans' or team == 'New Orleans' or team == 'New Orleans Pelicans': return 6016902
-    elif team == 'GoldenState' or team == 'Golden State' or team == 'Golden State Warriors': return 48149619
-    elif team == 'LAClippers' or team == 'LA Clippers' or team == 'Los Angeles Clippers': return 10709842
-    elif team == 'Charlotte' or team == 'Charlotte Hornets': return 5802049
-    elif team == 'Dallas' or team == 'Dallas Mavericks': return 10535695
+def average(numbers): 
+    sum = 0
+    for x in numbers: 
+        sum += x
+    if sum == 0: 
+        return 0
+    else: 
+        return float(sum/len(numbers))
+
+def logit_spread(df): 
+    X = df[['spread', 'pace_h', 'pace_a', 'ortg_h', 'ortg_a', 'drb_h', 'drb_a', 'threePAR_h', 'threePAR_a', 'ts_h', 'ts_a', 'ftr_h', 'ftr_a', 'd_tov_h', 'd_tov_a', 'o_tov_h', 'o_tov_a', 'ftperfga_h', 'ftperfga_a', 'points_over_average_ratio_h', 'points_over_average_ratio_a', 'hotness_ratio_h', 'hotness_ratio_a', 'std_dev_h', 'std_dev_a', 'win_pct_h', 'win_pct_a', 'rsw_h', 'rsw_a', 'ratings_2k_h', 'ratings_2k_a', 'win_pct_close_h', 'win_pct_close_a', 'sos_h', 'sos_a', 'mov_a_h', 'mov_a_a', 'injury_mins_h', 'injury_mins_a', 'drtg_h', 'drtg_a']]
+    X['intercept'] = -0.1662377
+    coefs = [0.004023, 0.0360045, -0.0269394, 0.0630027, -0.0104669, 0.0110417, -0.0077624, 0.9284867, -1.350638, -7.07015, 0.9263744, -2.08019, 0.1163992, 0.0513194, 0.0351266, 0.0091355, -0.0273747, 2.851526, 0.2861693, -4.865999, 1.248197, -0.4978895, 0.0724876, 0.0134026, 0.0150962, 0.2478499, 0.6733762, 0.0046755, 0.0079782, 0.0256954, -0.0318087, 0.1798136, -0.74373, -0.1768355, -0.1041935, -0.010406, -0.0071341, -0.5646092, 0.0187997, 0.0012492, -0.0062607, 1]
+    z = np.dot(X, coefs)
+    prob = 1 / (1 + np.exp(-z))
+    df['calc_home_prob'] = prob
+    return df
+
+def get_ratings(year, team): 
+    filepath = f'./ratings/{year}.xlsx'
+    df = pd.read_excel(filepath)
+    col_name = f"{str(year-1)}/{str(year)[2:4]}"
+    for row in range(df.shape[0]): 
+        if df.at[row, 'Team'] == team: 
+            rating1 = df.at[row, col_name]
+    return rating1
 
 def convert_team_name(team): 
     if team == 'LALakers' or team == 'LA Lakers': return 'Los Angeles Lakers'
@@ -218,6 +147,11 @@ def get_abbrv(team, year):
         else: return 'CHO'
     elif team == 'Dallas' or team == 'Dallas Mavericks': return 'DAL'
 
+def get_mov_excel(year): 
+    filepath = f'./movRatings/{year}.xlsx'
+    df = pd.read_excel(filepath)
+    return df
+
 def get_game_log(team, year): 
     print("Getting game log for " + team + " in year " + str(year))
     team_str = get_abbrv(team, year)
@@ -265,6 +199,11 @@ def get_odds():
     response = requests.request("GET", url, headers=headers, params=querystring)
     return response
 
+def get_rsw_odds_excel(year): 
+    filepath = f'./rswOdds/{year}.xlsx'
+    df = pd.read_excel(filepath)
+    return df
+
 def get_pct_overs_hit(team1, team2): 
     if team1 == 'Golden State Warriors': team1 = 'Golden State'
     elif team1 == 'Los Angeles Clippers': team1 = 'LA Clippers'
@@ -303,6 +242,55 @@ def get_pct_overs_hit(team1, team2):
     pct = (home_pct + away_pct)/2
     return pct
 
+def get_player_game_log_current(player, team, season): 
+    roster = get_roster_excel(team_name_mapping.get(get_city(team), get_city(team)), season)
+    bbref_url = None
+    for row in range(roster.shape[0]): 
+        if unidecode(roster.at[row, 'Player']) == player: 
+            bbref_url = roster.at[row, 'bbref url']
+    if bbref_url == None: 
+        return pd.DataFrame()
+    return get_player_game_log(bbref_url, season)
+
+def get_game_log_excel(team, year): 
+    filepath = f'./gameLogs/{year}/{team}.xlsx'
+    df = pd.read_excel(filepath)
+    return df
+
+def get_mins_injured_current(team, season):  
+    injured_players = get_current_injuries(team)
+    total_ratio = 0
+    for player in injured_players: 
+        player_game_log = get_player_game_log_current(player, team, season)
+        time_on_team = {}
+        on_team = False
+        mins_on_team = 0
+        gp_on_team = 0
+        for row in range(player_game_log.shape[0]): 
+            date_string = str(player_game_log.at[row, 'Date'])
+            date_list = date_string.split(' ')[0].split('-')
+            date_of_game = datetime.date(int(date_list[0]), int(date_list[1]), int(date_list[2])) 
+            if abrv_to_city(player_game_log.at[row, 'Tm'], season) == team_name_mapping.get(get_city(team), get_city(team)): 
+                gp_on_team += 1
+                if not on_team: 
+                    on_team = True
+                    time_on_team[len(time_on_team)] = {'start': date_of_game, 'end': None}
+                try: 
+                    minutes_list = player_game_log.at[row, 'MP'].split(':')
+                    minutes = float(minutes_list[0]) + (float(minutes_list[1])/60)
+                    mins_on_team += minutes
+                except ValueError:
+                    minutes = 0
+            elif abrv_to_city(player_game_log.at[row, 'Tm'], season) != team_name_mapping.get(get_city(team), get_city(team)) and on_team: 
+                on_team = False
+                time_on_team[len(time_on_team)-1]['end'] = date_of_game
+        total_mins_while_on_team = gp_on_team * 240
+        if total_mins_while_on_team > 0: 
+            ratio = mins_on_team/total_mins_while_on_team
+        else: ratio = 0
+        total_ratio += ratio
+    return total_ratio
+
 team_names = [ "Atlanta", "Boston", "Brooklyn", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"]
 
 team_name_mapping = {
@@ -326,6 +314,16 @@ def get_league_scoring_average(year):
 
     return df.at[30, 'PTS']
 
+game_logs = {}
+# Iterate over the list of teams and the range of years
+for team in team_names:
+    # Use the get_game_log function to retrieve the dataframe for the current team and year
+    df = get_game_log(team, CURR_YEAR)
+    # Add the dataframe to the dictionary with the key (team, year)
+    game_logs[(team, CURR_YEAR)] = df
+    # print("Generated game log for " + team + " in " + str(CURR_YEAR) + "...")
+    time.sleep(2.5)
+print("\n\n")
 year = CURR_YEAR
 ratings = get_2k_ratings(CURR_YEAR)
 league_scoring_average = get_league_scoring_average(CURR_YEAR)
@@ -333,17 +331,22 @@ league_scoring_average = get_league_scoring_average(CURR_YEAR)
 odds = get_odds().json()
 # print(odds)
 total_data = pd.DataFrame({'year': [], 'hitOver': [], 'total': [], 'avg_popularity': [], 'totalppg': [], 'size_of_spread': [], 'home_team': [], 'away_team': [], 'pct_overs_hit': [], 'pace': [], 'ortg': [], 'drtg': [], 'drb': [], 'threePAR': [], 'ts': [], 'ftr': [], 'd_tov': [], 'o_tov': [], 'ftperfga': [], 'points_over_average_ratio': [], 'hotness_ratio': [], 'std_dev': [], 'win_pct': [], 'rsw': [], 'ratings_2k': []})
+spread_data = pd.DataFrame({'year': [], 'home_spread_hit': [], 'total': [], 'spread': [], 'home_team': [], 'away_team': [], 'pct_spreads_hit_h': [], 'pct_spreads_hit_a': [], 'ppg_h': [], 'ppg_a': [], 'pace_h': [], 'pace_a': [], 'ortg_h': [], 'ortg_a': [], 'drtg_h': [], 'drtg_a': [], 'drb_h': [], 'drb_a': [], 'threePAR_h': [], 'threePAR_a': [], 'ts_h': [], 'ts_a': [], 'ftr_h': [], 'ftr_a': [], 'd_tov_h': [], 'd_tov_a': [], 'o_tov_h': [], 'o_tov_a': [], 'ftperfga_h': [], 'ftperfga_a': [], 'points_over_average_ratio_h': [], 'points_over_average_ratio_a': [], 'hotness_ratio_h': [], 'hotness_ratio_a': [], 'std_dev_h': [], 'std_dev_a': [], 'win_pct_h': [], 'win_pct_a': [], 'rsw_h': [], 'rsw_a': [], 'ratings_2k_h': [], 'ratings_2k_a': [], 'win_pct_close_h': [], 'win_pct_close_a': [], 'sos_h': [], 'sos_a': [], 'mov_a_h': [], 'mov_a_a': [], 'injury_gmsc_h': [], 'injury_gmsc_a': [], 'injury_mins_h': [], 'injury_mins_a': []})
 for game in odds: 
     if len(game['bookmakers'][0]['markets'])>1: 
-        size_of_spread = float(game['bookmakers'][0]['markets'][0]['outcomes'][0]['point'])
-        if size_of_spread < 0: size_of_spread *= -1
-        print("Size of spread: " + str(size_of_spread))
+        # print("Size of spread: " + str(size_of_spread))
         total = float(game['bookmakers'][0]['markets'][1]['outcomes'][0]['point'])
-        print("Total: " + str(total))
+        # print("Total: " + str(total))
         team1 = game['home_team']
         team2 = game['away_team']
-        game_log_1 = get_game_log(team1, CURR_YEAR)
-        game_log_2 = get_game_log(team2, CURR_YEAR)   
+        if game['bookmakers'][0]['markets'][0]['outcomes'][0]['name'] == team1: 
+            spread = float(game['bookmakers'][0]['markets'][0]['outcomes'][0]['point'])
+        else: 
+            spread = float(game['bookmakers'][0]['markets'][0]['outcomes'][1]['point'])
+        if spread < 0: size_of_spread = -1*spread
+        else: size_of_spread = spread
+        game_log_1 = game_logs[(team_name_mapping.get(get_city(team1), get_city(team1)), year)]
+        game_log_2 = game_logs[(team_name_mapping.get(get_city(team2), get_city(team2)), year)] 
 
         o_tov1 = 0
         o_tov2 = 0
@@ -438,6 +441,8 @@ for game in odds:
         ftperfga = (ftperfga1 + ftperfga2)/2
         totalppg = (ppg1 + ppg2)/2
 
+        points_over_average_ratio1 = ppg1/league_scoring_average
+        points_over_average_ratio2 = ppg2/league_scoring_average
         points_over_average_ratio = totalppg / league_scoring_average
 
         recent_ppg1 = 0
@@ -462,82 +467,232 @@ for game in odds:
             hotness_ratio2 = recent_ppg2/ppg2
         hotness_ratio = (hotness_ratio1 + hotness_ratio2)/2
 
-        avg_followers = (get_avg_followers(team2) + get_avg_followers(team1))/2
-
         std_dev1 = calc_std_dev(points1)
         std_dev2 = calc_std_dev(points2)
         std_dev = (std_dev1 + std_dev2)/2
 
-        total_data.loc[len(total_data.index)] = [year, None, total, avg_followers, totalppg, size_of_spread, get_city(team1), get_city(team2), get_pct_overs_hit(team1, team2), pace, ortg, drtg, drb, threePAR, ts, ftr, d_tov, o_tov, ftperfga, points_over_average_ratio, hotness_ratio, std_dev, None, None, None]
-        #last 3 vars: win_pct, rsw, rating
+        rating1 = get_ratings(CURR_YEAR, team1)
+        rating2 = get_ratings(CURR_YEAR, team2)
+        rating = (rating1 + rating2)/2
 
-print(total_data)
-total_data.to_excel("current_games_total.xlsx")
+        wins1 = 0
+        games1 = 0
+        wins1close = 0
+        games1close = 0
+        wins2 = 0
+        games2 = 0
+        wins2close = 0
+        games2close = 0
+        for row in range(game_log_1.shape[0]): 
+            if game_log_1.at[row, 'W/L'] == 'W': 
+                wins1 += 1
+            games1 += 1
+            if abs(int(game_log_1.at[row, 'Tm']) - int(game_log_1.at[row, 'Opp'])) < CLOSE_GAME_THRESHOLD: 
+                if game_log_1.at[row, 'W/L'] == 'W': 
+                    wins1close += 1
+                games1close += 1
+        for row in range(game_log_2.shape[0]): 
+            if game_log_2.at[row, 'W/L'] == 'W': 
+                wins2 += 1
+            games2 += 1
+            if abs(int(game_log_2.at[row, 'Tm']) - int(game_log_2.at[row, 'Opp'])) < CLOSE_GAME_THRESHOLD: 
+                if game_log_2.at[row, 'W/L'] == 'W': 
+                    wins2close += 1
+                games2close += 1
+        win_pct1 = wins1/games1
+        win_pct2 = wins2/games2
+        win_pct = (win_pct1 + win_pct2)/2
+        win_pct_close1 = wins1close/games1close
+        win_pct_close2 = wins2close/games2close
+        win_pct_close = (win_pct_close1 + win_pct_close2)/2
+
+        #rsw
+        preseason_odds = get_rsw_odds_excel(CURR_YEAR)
+        rsw1 = 0
+        rsw2 = 0
+        for team in range(preseason_odds.shape[0]): 
+            if preseason_odds.at[team, 'Team'] == team1: 
+                rsw1 = preseason_odds.at[team, 'W-L O/U']
+            elif preseason_odds.at[team, 'Team'] == team2: 
+                rsw2 = preseason_odds.at[team, 'W-L O/U']
+        rsw = (rsw1+rsw2)/2
+
+        # adjusted MOV 
+        mov_ratings_for_year = get_mov_excel(CURR_YEAR-1)
+        mov_a_h = 0
+        mov_a_a = 0
+        for team in range(mov_ratings_for_year.shape[0]): 
+            if mov_ratings_for_year.at[team, 'Team'] == team1: 
+                mov_a_h = mov_ratings_for_year.at[team, 'MOV/A']
+            elif mov_ratings_for_year.at[team, 'Team'] == team2: 
+                mov_a_a = mov_ratings_for_year.at[team, 'MOV/A']
+
+        #injuries
+        injury_mins1 = get_mins_injured_current(team1, CURR_YEAR)
+        injury_mins2 = get_mins_injured_current(team2, CURR_YEAR)
+        injury_gmsc1 = None
+        injury_gmsc2 = None
+
+        #strength of schedule
+        home_sos_array = []
+        away_sos_array = []
+        team_names_spreadsheet = [ "Atlanta", "Boston", "Brooklyn", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "GoldenState", "Houston", "Indiana", "LAClippers", "LALakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "NewOrleans", "NewYork", "OklahomaCity", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "SanAntonio", "Toronto", "Utah", "Washington"]
+        team_abbrvs = ['ATL', 'BOS', 'BRK', 'CHO', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOP', 'NYK', 'OKC', 'ORL', 'PHI', 'PHO', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS']
+        index = 31
+        for row in range(game_log_1.shape[0]): 
+            opp_abrv = game_log_1.at[row, 'Opp_team']
+            date_string = str(game_log_1.at[row, 'Date'])
+            date_list = date_string.split(' ')[0].split('-')
+            date_of_game = datetime.date(int(date_list[0]), int(date_list[1]), int(date_list[2])) 
+            for x in range(len(team_abbrvs)): 
+                if team_abbrvs[x] == opp_abrv: 
+                    index = x
+            opp_team = team_names_spreadsheet[index]
+            opp_game_log = game_logs[(team_name_mapping.get(opp_team, opp_team), CURR_YEAR)]
+            wins = 0
+            losses = 0
+            for row2 in range(opp_game_log.shape[0]): 
+                date_string2 = str(opp_game_log.at[row2, 'Date'])
+                date_list2 = date_string2.split(' ')[0].split('-')
+                date_of_game2 = datetime.date(int(date_list2[0]), int(date_list2[1]), int(date_list2[2])) 
+                if date_of_game2 < date_of_game: 
+                    if opp_game_log.at[row2, 'W/L'] == 'W': 
+                        wins += 1
+                    else: 
+                        losses += 1
+                else: 
+                    break
+            if wins+losses > 0: 
+                winpct = wins/(wins+losses)
+            else: winpct = 0
+            home_sos_array.append(winpct)
+        index = 31
+        for row in range(game_log_2.shape[0]): 
+            opp_abrv = game_log_2.at[row, 'Opp_team']
+            date_string = str(game_log_2.at[row, 'Date'])
+            date_list = date_string.split(' ')[0].split('-')
+            date_of_game = datetime.date(int(date_list[0]), int(date_list[1]), int(date_list[2])) 
+            for x in range(len(team_abbrvs)): 
+                if team_abbrvs[x] == opp_abrv: 
+                    index = x
+            opp_team = team_names_spreadsheet[index]
+            opp_game_log = game_logs[(team_name_mapping.get(opp_team, opp_team), CURR_YEAR)]
+            wins = 0
+            losses = 0
+            for row2 in range(opp_game_log.shape[0]): 
+                date_string2 = str(opp_game_log.at[row2, 'Date'])
+                date_list2 = date_string2.split(' ')[0].split('-')
+                date_of_game2 = datetime.date(int(date_list2[0]), int(date_list2[1]), int(date_list2[2])) 
+                if date_of_game2 < date_of_game: 
+                    if opp_game_log.at[row2, 'W/L'] == 'W': 
+                        wins += 1
+                    else: 
+                        losses += 1
+                else: 
+                    break
+            if wins+losses > 0:
+                winpct = wins/(wins+losses)
+            else: winpct = 0
+            away_sos_array.append(winpct)
+        sos1 = average(home_sos_array)
+        sos2 = average(away_sos_array)
+
+        total_data.loc[len(total_data.index)] = [year, None, total, None, totalppg, size_of_spread, get_city(team1), get_city(team2), get_pct_overs_hit(team1, team2), pace, ortg, drtg, drb, threePAR, ts, ftr, d_tov, o_tov, ftperfga, points_over_average_ratio, hotness_ratio, std_dev, win_pct, rsw, rating]
+        spread_data.loc[len(spread_data.index)] = [year, None, total, spread, get_city(team1), get_city(team2), None, None, ppg1, ppg2, pace1, pace2, ortg1, ortg2, drtg1, drtg2, drb1, drb2, threePAR1, threePAR2, ts1, ts2, ftr1, ftr2, d_tov1, d_tov2, o_tov1, o_tov2, ftperfga1, ftperfga2, points_over_average_ratio1, points_over_average_ratio2, hotness_ratio1, hotness_ratio2, std_dev1, std_dev2, win_pct1, win_pct2, rsw1, rsw2, rating1, rating2, win_pct_close1, win_pct_close2, sos1, sos2, mov_a_h, mov_a_a, injury_gmsc1, injury_gmsc2, injury_mins1, injury_mins2]
+
 df_total = logit_total(total_data)
-# print(spread_data)
-# spread_data.to_excel("current_games_spread.xlsx")
-# df_spread = logit_spread(spread_data)
+df_total.to_excel("current_games_total.xlsx")
+df_spread = logit_spread(spread_data)
+df_spread.to_excel("current_games_spread.xlsx")
 for x in range(df_total.shape[0]):
     total = df_total.at[x, 'total'] 
     over_prob = df_total.at[x, 'calc_over_prob']
     letter = 'o' if over_prob > 0.5 else 'u'
-    away_team = df_total.at[x, 'away_team']
-    home_team = df_total.at[x, 'home_team']
+    away_team = team_name_mapping.get(df_total.at[x, 'away_team'], df_total.at[x, 'away_team'])
+    home_team = team_name_mapping.get(df_total.at[x, 'home_team'], df_total.at[x, 'home_team'])
     pct = str(over_prob*100) if letter=='o' else str(100-over_prob*100)
     print(f'{away_team} at {home_team}: {letter}{str(total)} with probability {pct}%')
-print("\n")
+# print(df_spread)
 #SPREAD
-# for x in range(df_spread.shape[0]): 
-#     spread = df_spread.at[x, 'spread']
-#     home_prob = df_spread.at[x, 'calc_home_prob']
-#     away_team = df_spread.at[x, 'away_team']
-#     home_team = df_spread.at[x, 'home_team']
-#     cover = home_team if home_prob > 0.5 else away_team
-#     pct = str(home_prob*100) if cover == home_team else str(100-home_prob*100)
-#     pm = '-' if (spread < 0 and cover == home_team) or (spread > 0 and cover==away_team) else '+'
-#     print(f'{away_team} at {home_team}: {pm}{str(abs(spread))} {cover} with probability {pct}%')
-print("\n Bets greater than 53%: ")
+for x in range(df_spread.shape[0]): 
+    spread = df_spread.at[x, 'spread']
+    home_prob = df_spread.at[x, 'calc_home_prob']
+    away_team = team_name_mapping.get(df_spread.at[x, 'away_team'], df_spread.at[x, 'away_team'])
+    home_team = team_name_mapping.get(df_spread.at[x, 'home_team'], df_spread.at[x, 'home_team'])
+    cover = home_team if home_prob > 0.5 else away_team
+    pct = str(home_prob*100) if cover == home_team else str(100-home_prob*100)
+    pm = '-' if (spread < 0 and cover == home_team) or (spread > 0 and cover==away_team) else '+'
+    spread_string = str(abs(spread)) if (spread*2)%2==1 else str(abs(int(spread)))
+    print(f'{away_team} at {home_team}: {cover} {pm}{spread_string} with probability {pct}%')
+print("\n   Bets greater than 53%: ")
 for x in range(df_total.shape[0]): 
     total = df_total.at[x, 'total'] 
     over_prob = df_total.at[x, 'calc_over_prob']
     letter = 'o' if over_prob > 0.5 else 'u'
-    away_team = df_total.at[x, 'away_team']
-    home_team = df_total.at[x, 'home_team']
+    away_team = team_name_mapping.get(df_total.at[x, 'away_team'], df_total.at[x, 'away_team'])
+    home_team = team_name_mapping.get(df_total.at[x, 'home_team'], df_total.at[x, 'home_team'])
     pct = str(over_prob*100) if letter=='o' else str(100-over_prob*100)
     if float(pct) > 53: 
         print(f'{away_team} at {home_team}: {letter}{str(total)} with probability {pct}%')
-# for x in range(df_spread.shape[0]): 
-#     spread = df_spread.at[x, 'spread']
-#     home_prob = df_spread.at[x, 'calc_home_prob']
-#     away_team = df_spread.at[x, 'away_team']
-#     home_team = df_spread.at[x, 'home_team']
-#     cover = home_team if home_prob > 0.5 else away_team
-#     pct = str(home_prob*100) if cover == home_team else str(100-home_prob*100)
-#     pm = '-' if (spread < 0 and cover == home_team) or (spread > 0 and cover==away_team) else '+'
-#     if float(pct) > 53: 
-#         print(f'{away_team} at {home_team}: {pm}{str(abs(spread))} {cover} with probability {pct}%')
+for x in range(df_spread.shape[0]): 
+    spread = df_spread.at[x, 'spread']
+    home_prob = df_spread.at[x, 'calc_home_prob']
+    away_team = team_name_mapping.get(df_spread.at[x, 'away_team'], df_spread.at[x, 'away_team'])
+    home_team = team_name_mapping.get(df_spread.at[x, 'home_team'], df_spread.at[x, 'home_team'])
+    cover = home_team if home_prob > 0.5 else away_team
+    pct = str(home_prob*100) if cover == home_team else str(100-home_prob*100)
+    pm = '-' if (spread < 0 and cover == home_team) or (spread > 0 and cover==away_team) else '+'
+    spread_string = str(abs(spread)) if (spread*2)%2==1 else str(abs(int(spread)))
+    if float(pct) > 53: 
+        print(f'{away_team} at {home_team}: {cover} {pm}{spread_string} with probability {pct}%')
 
-#EDIT THIS TO INCLUDE SPREADS
-print("Generating tweet...")
+
 top_bet_index = 0
 top_bet_pct = 0.0
+top_bet_ou = True
 for x in range(df_total.shape[0]): 
     total = df_total.at[x, 'total'] 
     over_prob = df_total.at[x, 'calc_over_prob']
     letter = 'o' if over_prob > 0.5 else 'u'
-    away_team = df_total.at[x, 'away_team']
-    home_team = df_total.at[x, 'home_team']
+    away_team = team_name_mapping.get(df_total.at[x, 'away_team'], df_total.at[x, 'away_team'])
+    home_team = team_name_mapping.get(df_total.at[x, 'home_team'], df_total.at[x, 'home_team'])
     pct = str(over_prob*100) if letter=='o' else str(100-over_prob*100)
     if float(pct) > top_bet_pct: 
+        top_bet_pct = float(pct)
         top_bet_index = x
-today = date.today()
-x = top_bet_index
-total = df_total.at[x, 'total'] 
-over_prob = df_total.at[x, 'calc_over_prob']
-letter = 'o' if over_prob > 0.5 else 'u'
-away_team = df_total.at[x, 'away_team']
-home_team = df_total.at[x, 'home_team']
-pct = str(over_prob*100) if letter=='o' else str(100-over_prob*100)
-print(f"\nNBA Pick of the Day ({today.month}/{today.day}/{today.year}) for SportsNinja Stat Model v1.1: \n")
-print(f"{away_team} @ {home_team}: {letter}{str(total)} with a probability of {pct}%\n")
-print(f"Current Season Record for v1.1: 5-3")
+        top_bet_ou = True
+for x in range(df_spread.shape[0]): 
+    # spread = df_spread.at[x, 'spread']
+    home_prob = df_spread.at[x, 'calc_home_prob']
+    away_team = team_name_mapping.get(df_spread.at[x, 'away_team'], df_spread.at[x, 'away_team'])
+    home_team = team_name_mapping.get(df_spread.at[x, 'home_team'], df_spread.at[x, 'home_team'])
+    cover = home_team if home_prob > 0.5 else away_team
+    pct = str(home_prob*100) if cover == home_team else str(100-home_prob*100)
+    # pm = '-' if (spread < 0 and cover == home_team) or (spread > 0 and cover==away_team) else '+'
+    if float(pct) > top_bet_pct: 
+        top_bet_pct = float(pct)
+        top_bet_index = x
+        top_bet_ou = False
+if top_bet_ou: 
+    x = top_bet_index
+    total = df_total.at[x, 'total'] 
+    over_prob = df_total.at[x, 'calc_over_prob']
+    letter = 'o' if over_prob > 0.5 else 'u'
+    away_team = team_name_mapping.get(df_total.at[x, 'away_team'], df_total.at[x, 'away_team'])
+    home_team = team_name_mapping.get(df_total.at[x, 'home_team'], df_total.at[x, 'home_team'])
+    pct = str(over_prob*100) if letter=='o' else str(100-over_prob*100)
+    pick_string = f"{away_team}@{home_team} {letter}{total}"
+else: 
+    x = top_bet_index
+    spread = df_spread.at[x, 'spread']
+    home_prob = df_spread.at[x, 'calc_home_prob']
+    away_team = team_name_mapping.get(df_spread.at[x, 'away_team'], df_spread.at[x, 'away_team'])
+    home_team = team_name_mapping.get(df_spread.at[x, 'home_team'], df_spread.at[x, 'home_team'])
+    cover = home_team if home_prob > 0.5 else away_team
+    pct = str(home_prob*100) if cover == home_team else str(100-home_prob*100)
+    pm = '-' if (spread < 0 and cover == home_team) or (spread > 0 and cover==away_team) else '+'
+    spread_string = str(abs(spread)) if (spread*2)%2==1 else str(abs(int(spread)))
+    pick_string = f"{away_team}@{home_team} {cover} {pm}{spread_string}"
+print("\n")
+print("Generating tweet... \n")
+run_tweet_gen(pick_string, round(float(pct), 2))

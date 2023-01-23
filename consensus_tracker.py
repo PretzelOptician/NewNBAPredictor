@@ -39,7 +39,7 @@ game_ids = json.loads(requests.get(game_id_url).content.decode('utf8').replace("
 dict_list = []
 print("Generating consensus scores for total bets: ")
 for game in game_ids: 
-    dict1 = {'id': game['id'], 'home_team': game['home_team_id'], 'away_team': game['road_team_id'], 'z_total': 0.0, 'count': 0, 'over': True}
+    dict1 = {'id': game['id'], 'home_team': game['home_team_id'], 'away_team': game['road_team_id'], 'z_total': 0.0, 'count': 0, 'over': True, 'z_total_volume': 0.0}
     dict_list.append(dict1)
 z_total_ou = 0
 for user in picks: 
@@ -57,15 +57,16 @@ for user in picks:
                     z_to_add = -z
                 else: 
                     z_to_add = z
+                dict_['z_total_volume'] += z
                 dict_['z_total'] += z_to_add
                 dict_['count'] += 1
 for dict_ in dict_list: 
-    # print("raw z score: " + str(dict_['z_total']/dict_['count']))
     if dict_['z_total'] < 0: 
         dict_['z_total'] = -dict_['z_total']
         dict_['over'] = False
     total_string = "over" if dict_['over'] else "under"
-    print(f"For game {dict_['away_team']} at {dict_['home_team']}, the average AWCS score is {dict_['z_total']/dict_['count']} for the {total_string} (total: {dict_['z_total']}, percent of Z with pick made: {100*dict_['z_total']/z_total_ou}%)")
+    awcs = (dict_['z_total']/dict_['z_total_volume'])*math.sqrt(dict_['z_total'])
+    print(f"For game {dict_['away_team']} at {dict_['home_team']}, the average AWCS score is {awcs} for the {total_string} (total: {dict_['z_total']}, percent of Z with pick made: {100*dict_['z_total_volume']/z_total_ou}%)")
 
 ##spreads
 print("\nGenerating consensus scores for spread bets: ")
@@ -77,7 +78,7 @@ picks = data['picks']
 dict_list = []
 for game in game_ids: 
     ## HOME IS POSITIVE Z
-    dict1 = {'id': game['id'], 'home_team': game['home_team_id'], 'away_team': game['road_team_id'], 'z_total': 0.0, 'count': 0, 'home': True}
+    dict1 = {'id': game['id'], 'home_team': game['home_team_id'], 'away_team': game['road_team_id'], 'z_total': 0.0, 'count': 0, 'home': True, 'z_total_volume': 0.0}
     dict_list.append(dict1)
 z_total_spread = 0
 for user in picks: 
@@ -92,6 +93,7 @@ for user in picks:
                     z_to_add = -z
                 else: 
                     z_to_add = z
+                dict_['z_total_volume'] += z
                 dict_['z_total'] += z_to_add
                 dict_['count'] += 1
 for dict_ in dict_list: 
@@ -100,5 +102,6 @@ for dict_ in dict_list:
         dict_['z_total'] = -dict_['z_total']
         dict_['home'] = False
         # print("z val is negative, so dict_['home'] is " + str(dict_['home']))
+    awcs = (dict_['z_total']/dict_['z_total_volume'])*math.sqrt(dict_['z_total'])
     total_string = dict_['home_team'] if dict_['home'] else dict_['away_team']
-    print(f"For game {dict_['away_team']} at {dict_['home_team']}, the average AWCS score is {dict_['z_total']/dict_['count']} for {total_string} (total: {dict_['z_total']}, percent of Z with pick made: {100*dict_['z_total']/z_total_spread}%)")
+    print(f"For game {dict_['away_team']} at {dict_['home_team']}, the average AWCS score is {awcs} for {total_string} (total: {dict_['z_total']}, percent of Z with pick made: {100*dict_['z_total_volume']/z_total_spread}%)")
