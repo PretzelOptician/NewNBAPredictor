@@ -322,7 +322,7 @@ for team in team_names:
     # Add the dataframe to the dictionary with the key (team, year)
     game_logs[(team, CURR_YEAR)] = df
     # print("Generated game log for " + team + " in " + str(CURR_YEAR) + "...")
-    time.sleep(2.5)
+    time.sleep(4)
 print("\n\n")
 year = CURR_YEAR
 ratings = get_2k_ratings(CURR_YEAR)
@@ -333,16 +333,20 @@ odds = get_odds().json()
 total_data = pd.DataFrame({'year': [], 'hitOver': [], 'total': [], 'avg_popularity': [], 'totalppg': [], 'size_of_spread': [], 'home_team': [], 'away_team': [], 'pct_overs_hit': [], 'pace': [], 'ortg': [], 'drtg': [], 'drb': [], 'threePAR': [], 'ts': [], 'ftr': [], 'd_tov': [], 'o_tov': [], 'ftperfga': [], 'points_over_average_ratio': [], 'hotness_ratio': [], 'std_dev': [], 'win_pct': [], 'rsw': [], 'ratings_2k': []})
 spread_data = pd.DataFrame({'year': [], 'home_spread_hit': [], 'total': [], 'spread': [], 'home_team': [], 'away_team': [], 'pct_spreads_hit_h': [], 'pct_spreads_hit_a': [], 'ppg_h': [], 'ppg_a': [], 'pace_h': [], 'pace_a': [], 'ortg_h': [], 'ortg_a': [], 'drtg_h': [], 'drtg_a': [], 'drb_h': [], 'drb_a': [], 'threePAR_h': [], 'threePAR_a': [], 'ts_h': [], 'ts_a': [], 'ftr_h': [], 'ftr_a': [], 'd_tov_h': [], 'd_tov_a': [], 'o_tov_h': [], 'o_tov_a': [], 'ftperfga_h': [], 'ftperfga_a': [], 'points_over_average_ratio_h': [], 'points_over_average_ratio_a': [], 'hotness_ratio_h': [], 'hotness_ratio_a': [], 'std_dev_h': [], 'std_dev_a': [], 'win_pct_h': [], 'win_pct_a': [], 'rsw_h': [], 'rsw_a': [], 'ratings_2k_h': [], 'ratings_2k_a': [], 'win_pct_close_h': [], 'win_pct_close_a': [], 'sos_h': [], 'sos_a': [], 'mov_a_h': [], 'mov_a_a': [], 'injury_gmsc_h': [], 'injury_gmsc_a': [], 'injury_mins_h': [], 'injury_mins_a': []})
 for game in odds: 
-    if len(game['bookmakers'][0]['markets'])>1: 
+    # print(game)
+    bookmaker_id = 0
+    while(len(game['bookmakers']) < bookmaker_id and len(game['bookmakers'][bookmaker_id]['markets']) != 2): 
+        bookmaker_id += 1
+    if len(game['bookmakers'][bookmaker_id]['markets'])>1: 
         # print("Size of spread: " + str(size_of_spread))
-        total = float(game['bookmakers'][0]['markets'][1]['outcomes'][0]['point'])
+        total = float(game['bookmakers'][bookmaker_id]['markets'][1]['outcomes'][0]['point'])
         # print("Total: " + str(total))
         team1 = game['home_team']
         team2 = game['away_team']
-        if game['bookmakers'][0]['markets'][0]['outcomes'][0]['name'] == team1: 
-            spread = float(game['bookmakers'][0]['markets'][0]['outcomes'][0]['point'])
+        if game['bookmakers'][bookmaker_id]['markets'][0]['outcomes'][0]['name'] == team1: 
+            spread = float(game['bookmakers'][bookmaker_id]['markets'][0]['outcomes'][0]['point'])
         else: 
-            spread = float(game['bookmakers'][0]['markets'][0]['outcomes'][1]['point'])
+            spread = float(game['bookmakers'][bookmaker_id]['markets'][0]['outcomes'][1]['point'])
         if spread < 0: size_of_spread = -1*spread
         else: size_of_spread = spread
         game_log_1 = game_logs[(team_name_mapping.get(get_city(team1), get_city(team1)), year)]
@@ -599,6 +603,11 @@ for game in odds:
 
         total_data.loc[len(total_data.index)] = [year, None, total, None, totalppg, size_of_spread, get_city(team1), get_city(team2), get_pct_overs_hit(team1, team2), pace, ortg, drtg, drb, threePAR, ts, ftr, d_tov, o_tov, ftperfga, points_over_average_ratio, hotness_ratio, std_dev, win_pct, rsw, rating]
         spread_data.loc[len(spread_data.index)] = [year, None, total, spread, get_city(team1), get_city(team2), None, None, ppg1, ppg2, pace1, pace2, ortg1, ortg2, drtg1, drtg2, drb1, drb2, threePAR1, threePAR2, ts1, ts2, ftr1, ftr2, d_tov1, d_tov2, o_tov1, o_tov2, ftperfga1, ftperfga2, points_over_average_ratio1, points_over_average_ratio2, hotness_ratio1, hotness_ratio2, std_dev1, std_dev2, win_pct1, win_pct2, rsw1, rsw2, rating1, rating2, win_pct_close1, win_pct_close2, sos1, sos2, mov_a_h, mov_a_a, injury_gmsc1, injury_gmsc2, injury_mins1, injury_mins2]
+    else: 
+        team1 = game['home_team']
+        team2 = game['away_team']
+        print(f"NOTE: missing odds for game {team2} at {team1}")
+
 
 df_total = logit_total(total_data)
 df_total.to_excel("current_games_total.xlsx")
@@ -678,16 +687,16 @@ if top_bet_ou:
     total = df_total.at[x, 'total'] 
     over_prob = df_total.at[x, 'calc_over_prob']
     letter = 'o' if over_prob > 0.5 else 'u'
-    away_team = team_name_mapping.get(df_total.at[x, 'away_team'], df_total.at[x, 'away_team'])
-    home_team = team_name_mapping.get(df_total.at[x, 'home_team'], df_total.at[x, 'home_team'])
+    away_team = df_total.at[x, 'away_team']
+    home_team = df_total.at[x, 'home_team']
     pct = str(over_prob*100) if letter=='o' else str(100-over_prob*100)
     pick_string = f"{away_team}@{home_team} {letter}{total}"
 else: 
     x = top_bet_index
     spread = df_spread.at[x, 'spread']
     home_prob = df_spread.at[x, 'calc_home_prob']
-    away_team = team_name_mapping.get(df_spread.at[x, 'away_team'], df_spread.at[x, 'away_team'])
-    home_team = team_name_mapping.get(df_spread.at[x, 'home_team'], df_spread.at[x, 'home_team'])
+    away_team = df_spread.at[x, 'away_team']
+    home_team = df_spread.at[x, 'home_team']
     cover = home_team if home_prob > 0.5 else away_team
     pct = str(home_prob*100) if cover == home_team else str(100-home_prob*100)
     pm = '-' if (spread < 0 and cover == home_team) or (spread > 0 and cover==away_team) else '+'

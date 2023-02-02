@@ -22,7 +22,7 @@ def get_rsw_odds(year):
 
     return df
 
-years = range(2013, 2024)
+years = range(2007, 2024)
 
 for year in years:
     # Construct the file path for the game log file

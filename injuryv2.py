@@ -63,8 +63,12 @@ def get_player_profile_url(name, dob):
     elif name == "Nando De Colo": base_string = "decolna"
     elif unidecode(name) == "Tibor Pleiss": base_string = "pleisti"
     elif name == "Sheldon Mac": base_string = "mcclesh"
+    elif unidecode(name) == "Sasha Pavlovic": base_string = "pavloal"
+    elif name == "Juan Carlos Navarro": base_string = "navarju"
+    elif name == "Marcus Vinicius": base_string = "vincima"
+    elif name == "Mouhamed Sene": base_string = "senesa"
     else: base_string = (unidecode(names_list[1][0:5]) + unidecode(names_list[0][0:2])).lower()
-    if name == "PJ Hairston" or name == "Markus Howard" or name == "Xavier Munford" or name == "Killian Tillie": 
+    if name == "PJ Hairston" or name == "Markus Howard" or name == "Xavier Munford" or name == "Killian Tillie" or name == "Bobby Jones": 
         url = f"https://www.basketball-reference.com/players/{base_string[0]}/{base_string}02.html"
     elif name == "George King" or name == "Brandon Williams": 
         url = f"https://www.basketball-reference.com/players/{base_string[0]}/{base_string}03.html"
@@ -111,6 +115,7 @@ def get_player_profile_url(name, dob):
 ## REMEMBER TO ANGLICIZE FOREIGN NAMES (unidecode)
 def get_player_game_log(bbref_url, season): 
     #in caller function, make sure that a game log doesn't already exist.
+    time.sleep(3)
     game_log_url = bbref_url[:-5] + f"/gamelog/{season}"
     response = requests.get(game_log_url)
     soup = BeautifulSoup(response.content, 'html.parser')
@@ -172,12 +177,14 @@ def get_abbrv(team, year):
     elif team == 'Atlanta': return 'ATL'
     elif team == 'Orlando': return 'ORL'
     elif team == 'Brooklyn': return 'BRK'
+    elif team == 'NewJersey' or team == 'New Jersey': return 'NJN'
     elif team == 'Washington': return 'WAS'
     elif team == 'Miami': return 'MIA'
     elif team == 'NewYork' or team == 'New York': return 'NYK'
     elif team == 'Indiana': return 'IND'
     elif team == 'Detroit': return 'DET'
     elif team == 'OklahomaCity' or team == 'Oklahoma City': return 'OKC'
+    elif team == 'Seattle': return 'SEA'
     elif team == 'Sacramento': return 'SAC'
     elif team == 'Minnesota': return 'MIN'
     elif team == 'Phoenix': return 'PHO'
@@ -186,7 +193,9 @@ def get_abbrv(team, year):
     elif team == 'Denver': return 'DEN'
     elif team == 'Houston': return 'HOU'
     elif team == 'Utah': return 'UTA'
-    elif team == 'NewOrleans' or team == 'New Orleans': return 'NOP'
+    elif team == 'NewOrleans' or team == 'New Orleans': 
+        if year < 2014: return 'NOH'
+        else: return 'NOP'
     elif team == 'GoldenState' or team == 'Golden State': return 'GSW'
     elif team == 'LAClippers' or team == 'LA Clippers': return 'LAC'
     elif team == 'Charlotte': 
@@ -223,21 +232,19 @@ def get_injuries_for_team(team, date):
     return injured_list
 
 def abrv_to_city(team_code, season): 
-    team_names = [ "Atlanta", "Boston", "Brooklyn", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"]
-    team_abbrvs = {'pre2015': ['ATL', 'BOS', 'BRK', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOP', 'NYK', 'OKC', 'ORL', 'PHI', 'PHO', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS'], 'post2015': ['ATL', 'BOS', 'BRK', 'CHO', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOP', 'NYK', 'OKC', 'ORL', 'PHI', 'PHO', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS']}
-    if season < 2015: 
-        index = 31
-        for abbr in range(len(team_abbrvs['pre2015'])): 
-            if team_code == team_abbrvs['pre2015'][abbr]: 
-                index = abbr
-                break
-    else: 
-        index = 31
-        for abbr in range(len(team_abbrvs['post2015'])): 
-            if team_code == team_abbrvs['post2015'][abbr]: 
-                index = abbr
-                break
-    return team_names[index]
+    team_names = { 'pre2009': ["Atlanta", "Boston", "New Jersey", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Seattle", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"], 'pre2013': ["Atlanta", "Boston", "New Jersey", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"], 'pre2014': ["Atlanta", "Boston", "Brooklyn", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"], 'pre2015': ["Atlanta", "Boston", "Brooklyn", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"], 'post2015': ["Atlanta", "Boston", "Brooklyn", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"]}
+    team_abbrvs = { 'pre2009': ['ATL', 'BOS', 'NJN', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOH', 'NYK', 'SEA', 'ORL', 'PHI', 'PHO', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS'], 'pre2013': ['ATL', 'BOS', 'NJN', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOH', 'NYK', 'OKC', 'ORL', 'PHI', 'PHO', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS'], 'pre2014': ['ATL', 'BOS', 'BRK', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOH', 'NYK', 'OKC', 'ORL', 'PHI', 'PHO', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS'], 'pre2015': ['ATL', 'BOS', 'BRK', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOP', 'NYK', 'OKC', 'ORL', 'PHI', 'PHO', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS'], 'post2015': ['ATL', 'BOS', 'BRK', 'CHO', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOP', 'NYK', 'OKC', 'ORL', 'PHI', 'PHO', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS']}
+    if season < 2009: category = 'pre2009'
+    elif season < 2013: category = 'pre2013'
+    elif season < 2014: category = 'pre2014'
+    elif season < 2015: category = 'pre2015'
+    else: category = 'post2015'
+    index = 31
+    for abbr in range(len(team_abbrvs[category])): 
+        if team_code == team_abbrvs[category][abbr]: 
+            index = abbr
+            break
+    return team_names[category][index]
 
 def get_total_gmsc_during_date(team, date_beg, date_end): 
     if date_beg.month > 9 or date_beg.month == 9 and date_beg.day > 14: 
@@ -377,12 +384,77 @@ def get_current_injuries(team):
             injured_players.append(json[x]['player'])
     return injured_players
 
-team_names = [ "Atlanta", "Boston", "Brooklyn", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"]
-team_abbrvs = {'pre2015': ['ATL', 'BOS', 'BRK', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOP', 'NYK', 'OKC', 'ORL', 'PHI', 'PHO', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS'], 'post2015': ['ATL', 'BOS', 'BRK', 'CHO', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOP', 'NYK', 'OKC', 'ORL', 'PHI', 'PHO', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS']}
-years = range(2014, 2024)
+team_names = { 'pre2009': ["Atlanta", "Boston", "New Jersey", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Seattle", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"], 'pre2013': ["Atlanta", "Boston", "New Jersey", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"], 'pre2014': ["Atlanta", "Boston", "Brooklyn", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"], 'pre2015': ["Atlanta", "Boston", "Brooklyn", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"], 'post2015': ["Atlanta", "Boston", "Brooklyn", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"]}
+team_abbrvs = { 'pre2009': ['ATL', 'BOS', 'NJN', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOH', 'NYK', 'SEA', 'ORL', 'PHI', 'PHO', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS'], 'pre2013': ['ATL', 'BOS', 'NJN', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOH', 'NYK', 'OKC', 'ORL', 'PHI', 'PHO', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS'], 'pre2014': ['ATL', 'BOS', 'BRK', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOH', 'NYK', 'OKC', 'ORL', 'PHI', 'PHO', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS'], 'pre2015': ['ATL', 'BOS', 'BRK', 'CHA', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOP', 'NYK', 'OKC', 'ORL', 'PHI', 'PHO', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS'], 'post2015': ['ATL', 'BOS', 'BRK', 'CHO', 'CHI', 'CLE', 'DAL', 'DEN', 'DET', 'GSW', 'HOU', 'IND', 'LAC', 'LAL', 'MEM', 'MIA', 'MIL', 'MIN', 'NOP', 'NYK', 'OKC', 'ORL', 'PHI', 'PHO', 'POR', 'SAC', 'SAS', 'TOR', 'UTA', 'WAS']}
+years = range(2008, 2024)
 
-# print(get_mins_injured("LA Lakers", datetime.date(2023, 1, 12)))
+def generate_player_game_logs(): 
+    for year in years: 
+        if year < 2009: 
+            category = 'pre2009'
+        elif year < 2013: 
+            category = 'pre2013'
+        elif year < 2014: 
+            category = 'pre2014'
+        elif year < 2015: 
+            category = 'pre2015'
+        else: category = 'post2015'
+        for team_name in team_names[category]: 
+            roster = pd.read_excel(f'./rosters/{year}/{team_name}/{team_name}.xlsx')
+            # Construct the file path for the game log file
+            for row in range(roster.shape[0]): 
 
+                name = unidecode(roster.at[row, 'Player'])
+                bbref_url = roster.at[row, 'bbref url']
+
+                file_path = f'./rosters/{year}/{team_name}/{name}.xlsx'
+
+                # Check if the file already exists
+                if not os.path.exists(file_path) and not (name == "Ty Lawson" and team_name == "Washington"):
+                    # Generate the game log dataframe
+                    print("Generating game log for " + name + " in year " + str(year) + " for team " + team_name)
+                    game_log = get_player_game_log(bbref_url, year)
+                    time.sleep(3.5)
+                    print("Generated game log for " + name + " in year " + str(year) + " for team " + team_name)
+                    
+                    teams_played_for = []
+                    for row2 in range(game_log.shape[0]): 
+                        team = game_log.at[row2, 'Tm']
+                        if team not in teams_played_for: 
+                            teams_played_for.append(team)
+
+                    for team in teams_played_for: 
+                        print(team)
+                        index = 31
+                        for abbr in range(len(team_abbrvs[category])): 
+                            if team == team_abbrvs[category][abbr]: 
+                                index = abbr
+                                break
+                        file_path = f'./rosters/{year}/{team_names[category][index]}/{name}.xlsx'
+                        if not os.path.exists(file_path):
+                            game_log.to_excel(file_path)
+
+def generate_rosters(): 
+    for year in years: 
+        if year < 2009: 
+            category = 'pre2009'
+        elif year < 2013: 
+            category = 'pre2013'
+        elif year < 2014: 
+            category = 'pre2014'
+        elif year < 2015: 
+            category = 'pre2015'
+        else: category = 'post2015'
+        for team_name in team_names[category]: 
+            file_path = f"./rosters/{str(year)}/{team_name}/{team_name}.xlsx"
+            team_dir = f"./rosters/{str(year)}/{team_name}"
+            if not os.path.exists(team_dir):
+                os.makedirs(team_dir)
+            if not os.path.exists(file_path): 
+                roster = get_roster(team_name, year)
+                roster.to_excel(file_path)
+
+# generate_player_game_logs()
 # for team_name in team_names:
 #     for year in years:
 #         roster = pd.read_excel(f'./rosters/{year}/{team_name}/{team_name}.xlsx')

@@ -119,7 +119,22 @@ def read_and_update_file(pick_string):
         file.write(new_record + "\n" + pick_string)
 
 def generate_tweet(pick_string, pct): 
-    pick_string = pick_string.replace(' ', ': ').replace('@', ' @ ')
+    team_name_mapping = {
+        "LALakers": "LA Lakers",
+        "GoldenState": "Golden State",
+        "LAClippers": "LA Clippers", 
+        "NewOrleans": "New Orleans", 
+        "SanAntonio": "San Antonio", 
+        "OklahomaCity": "Oklahoma City", 
+        "NewYork": "New York"
+    }
+    pick_string_list = pick_string.split(' ')
+    if len(pick_string_list) == 3: 
+        team_list = pick_string_list[0].split('@')
+        pick_string = f"{team_name_mapping.get(team_list[0], team_list[0])} @ {team_name_mapping.get(team_list[1], team_list[1])}: {team_name_mapping.get(pick_string_list[1], pick_string_list[1])} {pick_string_list[2]}"
+    elif len(pick_string_list) == 2: 
+        team_list = pick_string_list[0].split('@')
+        pick_string = f"{team_name_mapping.get(team_list[0], team_list[0])} @ {team_name_mapping.get(team_list[1], team_list[1])}: {pick_string_list[1]}"
     pick_string = pick_string + " with a probability of " + str(pct) + "%."
     today = date.today()
     line1 = f"NBA Pick of the Day ({today.month}/{today.day}/{today.year}) for SportsNinja Stat Model v1.2: "

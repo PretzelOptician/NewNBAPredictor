@@ -43,7 +43,7 @@ for game in game_ids:
     dict_list.append(dict1)
 z_total_ou = 0
 for user in picks: 
-    if user['season_pick_pct'] > 60 and user['season_win_pct'] > 52.4: 
+    if user['season_pick_pct'] > 60 and user['season_win_pct'] > 50: 
         # print(user['username'])
         z = get_z_score(user)
         # print(z)
@@ -82,7 +82,7 @@ for game in game_ids:
     dict_list.append(dict1)
 z_total_spread = 0
 for user in picks: 
-    if user['season_pick_pct'] > 60 and user['season_win_pct'] > 52.4:
+    if user['season_pick_pct'] > 60 and user['season_win_pct'] > 50:
         z = get_z_score(user)
         z_total_spread += z
         for dict_ in dict_list: 

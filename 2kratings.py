@@ -16,7 +16,7 @@ def get_2k_ratings(year):
 
     return df
 
-years = range(2014, 2024)
+years = range(2008, 2024)
 
 for year in years:
     # Construct the file path for the game log file

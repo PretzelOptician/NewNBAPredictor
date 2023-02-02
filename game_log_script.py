@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
+import time
 
 def convert_team_name(team): 
     if team == 'LALakers' or team == 'LA Lakers': return 'Los Angeles Lakers'
@@ -47,12 +48,15 @@ def get_abbrv(team, year):
     elif team == 'Atlanta': return 'ATL'
     elif team == 'Orlando': return 'ORL'
     elif team == 'Brooklyn': return 'BRK'
+    elif team == 'New Jersey': return 'NJN'
     elif team == 'Washington': return 'WAS'
     elif team == 'Miami': return 'MIA'
     elif team == 'NewYork' or team == 'New York': return 'NYK'
     elif team == 'Indiana': return 'IND'
     elif team == 'Detroit': return 'DET'
-    elif team == 'OklahomaCity' or team == 'Oklahoma City': return 'OKC'
+    elif team == 'OklahomaCity' or team == 'Oklahoma City' or team == 'Seattle': 
+        if year < 2009: return 'SEA'
+        else: return 'OKC'
     elif team == 'Sacramento': return 'SAC'
     elif team == 'Minnesota': return 'MIN'
     elif team == 'Phoenix': return 'PHO'
@@ -61,7 +65,9 @@ def get_abbrv(team, year):
     elif team == 'Denver': return 'DEN'
     elif team == 'Houston': return 'HOU'
     elif team == 'Utah': return 'UTA'
-    elif team == 'NewOrleans' or team == 'New Orleans': return 'NOP'
+    elif team == 'NewOrleans' or team == 'New Orleans': 
+        if year < 2014: return 'NOH'
+        else: return 'NOP'
     elif team == 'GoldenState' or team == 'Golden State': return 'GSW'
     elif team == 'LAClippers' or team == 'LA Clippers': return 'LAC'
     elif team == 'Charlotte': 
@@ -93,26 +99,63 @@ def get_game_log(team, year):
     cols = ['Rk', 'G', 'Date', 'H/A', 'Opp_team', 'W/L', 'Tm', 'Opp', 'ORtg', 'DRtg', 'Pace', 'FTr', '3PAr', 'TS%', 'TRB%', 'AST%', 'STL%', 'BLK%', 'Ofr', 'eFG%_1', 'TOV%_1', 'ORB%', 'FT/FGA_1', 'Dfr', 'eFG%_2', 'TOV%_2', 'DRB%', 'FT/FGA_2', 'G_num']
     df.columns = cols
 
+    time.sleep(3)
+
     return df
 
-team_names = [ "Atlanta", "Boston", "Brooklyn", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"]
-years = range(2014, 2024)
+team_names = { 'pre2009': ["Atlanta", "Boston", "New Jersey", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Seattle", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"], 'pre2013': ["Atlanta", "Boston", "New Jersey", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"], 'post2013': ["Atlanta", "Boston", "Brooklyn", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"]}
+years = range(2008, 2024)
 
 
-for team in team_names:
-    for year in years:
-        # Construct the file path for the game log file
-        file_path = f'./gameLogs/{year}/{team}.xlsx'
+for year in years:
+    if year < 2009: 
+        for team in team_names['pre2009']: 
+            # Construct the file path for the game log file
+            file_path = f'./gameLogs/{year}/{team}.xlsx'
 
-        # Check if the file already exists
-        if not os.path.exists(file_path):
-            # Generate the game log dataframe
-            game_log = get_game_log(team, year)
+            # Check if the file already exists
+            if not os.path.exists(file_path):
+                # Generate the game log dataframe
+                game_log = get_game_log(team, year)
 
-            # Create the directory for the year if it doesn't exist
-            year_dir = f'./gameLogs/{year}'
-            if not os.path.exists(year_dir):
-                os.makedirs(year_dir)
+                # Create the directory for the year if it doesn't exist
+                year_dir = f'./gameLogs/{year}'
+                if not os.path.exists(year_dir):
+                    os.makedirs(year_dir)
 
-            # Save the game log dataframe to a .xlsx file
-            game_log.to_excel(file_path)
+                # Save the game log dataframe to a .xlsx file
+                game_log.to_excel(file_path)
+    elif year < 2013: 
+        for team in team_names['pre2013']: 
+            # Construct the file path for the game log file
+            file_path = f'./gameLogs/{year}/{team}.xlsx'
+
+            # Check if the file already exists
+            if not os.path.exists(file_path):
+                # Generate the game log dataframe
+                game_log = get_game_log(team, year)
+
+                # Create the directory for the year if it doesn't exist
+                year_dir = f'./gameLogs/{year}'
+                if not os.path.exists(year_dir):
+                    os.makedirs(year_dir)
+
+                # Save the game log dataframe to a .xlsx file
+                game_log.to_excel(file_path)
+    else: 
+        for team in team_names['post2013']:
+            # Construct the file path for the game log file
+            file_path = f'./gameLogs/{year}/{team}.xlsx'
+
+            # Check if the file already exists
+            if not os.path.exists(file_path):
+                # Generate the game log dataframe
+                game_log = get_game_log(team, year)
+
+                # Create the directory for the year if it doesn't exist
+                year_dir = f'./gameLogs/{year}'
+                if not os.path.exists(year_dir):
+                    os.makedirs(year_dir)
+
+                # Save the game log dataframe to a .xlsx file
+                game_log.to_excel(file_path)
