@@ -4,7 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 import datetime
 from datetime import date
-# from datetime import datetime
+from datetime import datetime
 from unidecode import unidecode
 import time
 

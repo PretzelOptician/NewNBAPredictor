@@ -1,6 +1,6 @@
 import pandas as pd
 from keras.layers import Input, Dense
-from keras.models import Model
+from keras.models import Model, load_model
 from sklearn.model_selection import train_test_split
 
 
@@ -16,28 +16,53 @@ X = df[['total', 'spread', 'pct_spreads_hit_h', 'pct_spreads_hit_a', 'ppg_h', 'p
 y = df['home_spread_hit'].values
 
 # split training and testing data
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
 
-# define the input shape
-input_shape = (X.shape[1],)
+# # define the input shape
+# input_shape = (X.shape[1],)
 
-# define the input layer
-inputs = Input(shape=input_shape)
+# # define the input layer
+# inputs = Input(shape=input_shape)
 
-# define the hidden layer
-hidden1 = Dense(24, activation='relu')(inputs)
+# # define the hidden layer
+# hidden1 = Dense(24, activation='relu')(inputs)
+# hidden2 = Dense(24, activation='relu')(hidden1)
 
-# define the output layer
-outputs = Dense(1, activation='sigmoid')(hidden1)
+# # define the output layer
+# outputs = Dense(1, activation='sigmoid')(hidden2)
 
-# define the model
-model = Model(inputs=inputs, outputs=outputs)
+# # define the model
+# model = Model(inputs=inputs, outputs=outputs)
 
-# compile the model
-model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+# # compile the model
+# model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
-# fit the model to the training data
-model.fit(X, y, epochs=12, batch_size=32)
+# # fit the model to the training data
+# model.fit(X, y, epochs=15, batch_size=24)
+
+model = load_model('model.h5')
+
+Y_proba = model.predict(X)
+df['ml_prob'] = Y_proba
+df.to_excel('./ml_data_spread.xlsx')
+
+win_58_home = 0
+lose_58_home = 0
+win_58_away = 0
+lose_58_away = 0
+for x in range(df.shape[0]): 
+    if df.at[x, 'ml_prob'] > 0.53:
+        if df.at[x, 'home_spread_hit'] == 1: 
+            win_58_home += 1
+        else: 
+            lose_58_home += 1
+    elif df.at[x, 'ml_prob'] < 0.47: 
+        if df.at[x, 'home_spread_hit'] == 1: 
+            lose_58_away += 1
+        else: 
+            win_58_away += 1
+print(f"Wins when picking home: {win_58_home}, losses when picking home: {lose_58_home}, wins when picking away: {win_58_away}, losses when picking away: {lose_58_away}")
+print(f"Record overall: {(win_58_home + win_58_away)/(win_58_home + win_58_away + lose_58_home + lose_58_away)}")
 
 # save the model to a file
 model.save('model.h5')
