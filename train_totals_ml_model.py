@@ -9,8 +9,8 @@ import tensorflow as tf
 from sklearn.metrics import accuracy_score
 from tensorflow.keras.callbacks import ReduceLROnPlateau
 from tensorflow.keras.optimizers import SGD
-from matplotlib import pyplot
 import math
+from memory_profiler import profile
 
 reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=3, min_lr=0.0001)
 
@@ -102,6 +102,8 @@ import keras.backend as K
 
 #     return loss
 
+acc_scores = []
+
 # load the training data from a file
 df = pd.read_excel('./total_data.xlsx').fillna(value=0)
 
@@ -121,16 +123,16 @@ from tensorflow.keras.regularizers import l2
 from tensorflow.keras.callbacks import EarlyStopping
 
 best_acc = 0
-total_combos = 6476
+total_combos = 12911
 n = 0
-for r in range(len(required_variables)+8, len(all_input_variables) - 1):
+for r in range(len(required_variables)+6, len(all_input_variables) - 1):
     combinations = itertools.combinations(all_input_variables, r)
     for combination in combinations:
         if not all(var in combination for var in required_variables):
             continue
         n += 1
         print("Now %.3f percent of the way through!" % (100*n/total_combos))
-        X = df[list(combination)].values
+        X = df[list(combination)].values.astype(np.float32)
         X = StandardScaler().fit_transform(X)
         # y = StandardScaler().fit_transform(y.reshape(len(y),1))[:,0]
         # split training and testing data
@@ -170,24 +172,21 @@ for r in range(len(required_variables)+8, len(all_input_variables) - 1):
         acc_score = get_acc_score(Y_proba, y_test)
         print('Threshold accuracy score: %.3f' % (acc_score))
 
+        acc_scores.append((combination, acc_score))
+        sorted_acc_scores = sorted(acc_scores, key=lambda x: x[1], reverse=True)
+        if len(sorted_acc_scores) > 50: 
+            acc_scores = sorted_acc_scores[:50]
+
         if acc_score > best_acc: # plot loss during training
             print("Found new best combo! The combo for this was: ", list(combination))
-            pyplot.clf()
-            pyplot.subplot(211)
-            pyplot.title('Loss')
-            pyplot.plot(history.history['loss'], label='train')
-            pyplot.plot(history.history['val_loss'], label='test')
-            pyplot.legend()
-
-            # plot accuracy during training
-            pyplot.subplot(212)
-            pyplot.title('Accuracy')
-            pyplot.plot(history.history['accuracy'], label='train')
-            pyplot.plot(history.history['val_accuracy'], label='test')
-            pyplot.legend()
+    
             best_acc = acc_score
             best_combo = list(combination)
             model.save('totals_model.h5')
+        del X
 
 print(f"Best threshold test score was {best_acc} for variable combo {list(combination)}")
-pyplot.show()
+sorted_acc_scores = sorted(acc_scores, key=lambda x: x[1], reverse=True)
+print("Top 50 combinations:")
+for i in range(min(50, len(sorted_combined))):
+    print(f"{i+1}. Combination: {sorted_combined[i][0]}\nAccuracy score: {sorted_combined[i][1]}\n")
