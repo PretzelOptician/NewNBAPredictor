@@ -16,13 +16,13 @@ CLOSE_GAME_THRESHOLD = 6
 pd.set_option('display.max_rows', None)
 
 def get_city(team): 
-    if team == 'Golden State Warriors': return 'GoldenState'
-    elif team == 'Los Angeles Clippers': return 'LAClippers'
-    elif team == 'Los Angeles Lakers': return 'LALakers'
-    elif team == 'New Orleans Pelicans': return 'NewOrleans'
-    elif team == 'New York Knicks': return 'NewYork'
-    elif team == 'Oklahoma City Thunder': return 'OklahomaCity'
-    elif team == 'San Antonio Spurs': return 'SanAntonio'
+    if team == 'Golden State Warriors' or team == 'GoldenState' or team == 'Golden State': return 'GoldenState'
+    elif team == 'Los Angeles Clippers' or team == 'LAClippers' or team == 'LA Clippers': return 'LAClippers'
+    elif team == 'Los Angeles Lakers' or team == 'LALakers' or team == 'LA Lakers': return 'LALakers'
+    elif team == 'New Orleans Pelicans' or team == 'NewOrleans' or team == 'New Orleans': return 'NewOrleans'
+    elif team == 'New York Knicks' or team == 'NewYork' or team == 'New York': return 'NewYork'
+    elif team == 'Oklahoma City Thunder' or team == 'OklahomaCity' or team == 'OklaCity' or team == 'Oklahoma City': return 'OklahomaCity'
+    elif team == 'San Antonio Spurs' or team == 'SanAntonio' or team == 'San Antonio': return 'SanAntonio'
     else: return team.split(' ')[0]
 
 #chatGPT generated function
@@ -267,13 +267,15 @@ def get_pct_spreads_hit(team):
     pct = wins/(wins+losses)
     return pct
 
-def get_player_game_log_current(player, team, season): 
+def get_player_game_log_current(player, team, season):
+    # print("team in get_player_game_log: ", team) 
     roster = get_roster_excel(team_name_mapping.get(get_city(team), get_city(team)), season)
     bbref_url = None
     for row in range(roster.shape[0]): 
-        if unidecode(roster.at[row, 'Player']) == player: 
+        if unidecode(roster.at[row, 'Player']) == player or unidecode(roster.at[row, 'Player']) == f'{player} Jr.' or unidecode(roster.at[row, 'Player']) == f'{player} (TW)' or unidecode(roster.at[row, 'Player']) == f'{player} Jr. (TW)' or unidecode(roster.at[row, 'Player']) == f'{player} Sr.' or unidecode(roster.at[row, 'Player']) == f'{player} Sr. (TW)': 
             bbref_url = roster.at[row, 'bbref url']
     if bbref_url == None: 
+        raise Exception(f"Failed to find player game log for {player}!")
         return pd.DataFrame()
     return get_player_game_log(bbref_url, season)
 
@@ -290,11 +292,13 @@ def get_total_gmsc_current(team, date_beg, date_end, season):
         player_game_log = get_player_game_log_current(player, team, season)
         #all the following for loop does is check that a) the player is on the team during a game and b) the game is between the given dates and if those two are true it adds the game score to the running total
         for row2 in range(player_game_log.shape[0]):
-            if abrv_to_city(player_game_log.at[row2, 'Tm'], season) == team: 
+            if abrv_to_city(player_game_log.at[row2, 'Tm'], season) == team_name_mapping.get(get_city(team), get_city(team)): 
                 date_string = str(player_game_log.at[row2, 'Date'])
                 date_list = date_string.split(' ')[0].split('-')
                 date_of_game = dt.date(int(date_list[0]), int(date_list[1]), int(date_list[2])) 
+                # print("Date of game for checked player: ", date_of_game)
                 if date_of_game < date_end and date_of_game >= date_beg: 
+                    # print("Date was within time injured player was on team!")
                     try: 
                         gamescore = float(player_game_log.at[row2, 'GmSc'])
                         if gamescore < 0 or gamescore > 0: 
@@ -302,7 +306,7 @@ def get_total_gmsc_current(team, date_beg, date_end, season):
                     except ValueError:
                         gamescore = 0
                 else: 
-                    break
+                    continue
     return total_gmsc
 
 def get_mins_injured_current(team, season):  
@@ -350,8 +354,8 @@ def get_gmsc_injured_current(team, season):
         for row in range(player_game_log.shape[0]): 
             date_string = str(player_game_log.at[row, 'Date'])
             date_list = date_string.split(' ')[0].split('-')
-            date_of_game = dt.date(int(date_list[0]), int(date_list[1]), int(date_list[2])) 
-            if abrv_to_city(player_game_log.at[row, 'Tm'], season) == team: 
+            date_of_game = dt.date(int(date_list[0]), int(date_list[1]), int(date_list[2]))
+            if abrv_to_city(player_game_log.at[row, 'Tm'], season) == team_name_mapping.get(get_city(team), get_city(team)): 
                 if not on_team: 
                     on_team = True
                     time_on_team[len(time_on_team)] = {'start': date_of_game, 'end': None}
@@ -361,19 +365,21 @@ def get_gmsc_injured_current(team, season):
                         gmsc_on_team += gamescore
                 except ValueError:
                     gamescore = 0
-            elif abrv_to_city(player_game_log.at[row, 'Tm'], season) != team and on_team: 
+            elif abrv_to_city(player_game_log.at[row, 'Tm'], season) != team_name_mapping.get(get_city(team), get_city(team)) and on_team: 
                 on_team = False
                 time_on_team[len(time_on_team)-1]['end'] = date_of_game
             else: 
-                break
+                continue
         # print("Time on team for player " + player + " during " + str(season) + " for team " + team)
         # print(time_on_team)
         total_gmsc_while_on_team = 0
         for stretch in range(len(time_on_team)): 
             start_date = time_on_team[stretch]['start']
             end_date = time_on_team[stretch]['end']
-            if end_date == None: end_date = date
-            total_gmsc_while_on_team += get_total_gmsc_current(team, start_date, end_date, season)
+            if end_date == None: end_date = dt.date.today()
+            total_gmsc_while_on_team += get_total_gmsc_current(team_name_mapping.get(get_city(team), get_city(team)), start_date, end_date, season)
+        print("total gamescore while on team: ", total_gmsc_while_on_team)
+        print("total gamescore for player: ", gmsc_on_team)
         if total_gmsc_while_on_team > 0: 
             ratio = gmsc_on_team/total_gmsc_while_on_team
         else: ratio = 0
@@ -432,7 +438,7 @@ league_scoring_average = get_league_scoring_average(CURR_YEAR)
 # print(league_scoring_average)
 odds = get_odds().json()
 # print(odds)
-total_data = pd.DataFrame({'year': [], 'hitOver': [], 'total': [], 'avg_popularity': [], 'totalppg': [], 'size_of_spread': [], 'home_team': [], 'away_team': [], 'pct_overs_hit': [], 'pace': [], 'ortg': [], 'drtg': [], 'drb': [], 'threePAR': [], 'ts': [], 'ftr': [], 'd_tov': [], 'o_tov': [], 'ftperfga': [], 'points_over_average_ratio': [], 'hotness_ratio': [], 'std_dev': [], 'win_pct': [], 'rsw': [], 'ratings_2k': []})
+total_data = pd.DataFrame({'year': [], 'hitOver': [], 'total': [], 'avg_popularity': [], 'totalppg': [], 'size_of_spread': [], 'home_team': [], 'away_team': [], 'pct_overs_hit': [], 'pace': [], 'ortg': [], 'drtg': [], 'drb': [], 'threePAR': [], 'ts': [], 'ftr': [], 'd_tov': [], 'o_tov': [], 'ftperfga': [], 'points_over_average_ratio': [], 'hotness_ratio': [], 'std_dev': [], 'win_pct': [], 'rsw': [], 'ratings_2k': [], 'win_pct_close': [], 'mov_a': [], 'sos': [], 'injury_gmsc': [], 'injury_mins': []})
 spread_data = pd.DataFrame({'year': [], 'home_spread_hit': [], 'total': [], 'spread': [], 'home_team': [], 'away_team': [], 'pct_spreads_hit_h': [], 'pct_spreads_hit_a': [], 'ppg_h': [], 'ppg_a': [], 'pace_h': [], 'pace_a': [], 'ortg_h': [], 'ortg_a': [], 'drtg_h': [], 'drtg_a': [], 'drb_h': [], 'drb_a': [], 'threePAR_h': [], 'threePAR_a': [], 'ts_h': [], 'ts_a': [], 'ftr_h': [], 'ftr_a': [], 'd_tov_h': [], 'd_tov_a': [], 'o_tov_h': [], 'o_tov_a': [], 'ftperfga_h': [], 'ftperfga_a': [], 'points_over_average_ratio_h': [], 'points_over_average_ratio_a': [], 'hotness_ratio_h': [], 'hotness_ratio_a': [], 'std_dev_h': [], 'std_dev_a': [], 'win_pct_h': [], 'win_pct_a': [], 'rsw_h': [], 'rsw_a': [], 'ratings_2k_h': [], 'ratings_2k_a': [], 'win_pct_close_h': [], 'win_pct_close_a': [], 'sos_h': [], 'sos_a': [], 'mov_a_h': [], 'mov_a_a': [], 'injury_gmsc_h': [], 'injury_gmsc_a': [], 'injury_mins_h': [], 'injury_mins_a': []})
 for game in odds: 
     # print(game)
@@ -632,12 +638,17 @@ for game in odds:
                 mov_a_h = mov_ratings_for_year.at[team, 'MOV/A']
             elif mov_ratings_for_year.at[team, 'Team'] == team2: 
                 mov_a_a = mov_ratings_for_year.at[team, 'MOV/A']
+        mov_a = (mov_a_h + mov_a_a)/2
 
         #injuries
         injury_mins1 = get_mins_injured_current(team1, CURR_YEAR)
         injury_mins2 = get_mins_injured_current(team2, CURR_YEAR)
         injury_gmsc1 = get_gmsc_injured_current(team1, CURR_YEAR)
         injury_gmsc2 = get_gmsc_injured_current(team2, CURR_YEAR)
+        # injury_gmsc1 = 0
+        # injury_gmsc2 = 0
+        injury_mins = (injury_mins1 + injury_mins2)/2
+        injury_gmsc = (injury_gmsc1 + injury_gmsc2)/2
 
         #strength of schedule
         home_sos_array = []
@@ -702,8 +713,9 @@ for game in odds:
             away_sos_array.append(winpct)
         sos1 = average(home_sos_array)
         sos2 = average(away_sos_array)
+        sos = (sos1 + sos2)/2
 
-        total_data.loc[len(total_data.index)] = [year, None, total, None, totalppg, size_of_spread, get_city(team1), get_city(team2), get_pct_overs_hit(team1, team2), pace, ortg, drtg, drb, threePAR, ts, ftr, d_tov, o_tov, ftperfga, points_over_average_ratio, hotness_ratio, std_dev, win_pct, rsw, rating]
+        total_data.loc[len(total_data.index)] = [year, None, total, None, totalppg, size_of_spread, get_city(team1), get_city(team2), get_pct_overs_hit(team1, team2), pace, ortg, drtg, drb, threePAR, ts, ftr, d_tov, o_tov, ftperfga, points_over_average_ratio, hotness_ratio, std_dev, win_pct, rsw, rating, win_pct_close, sos, mov_a, injury_gmsc, injury_mins]
         spread_data.loc[len(spread_data.index)] = [year, None, total, spread, get_city(team1), get_city(team2), get_pct_spreads_hit(team1), get_pct_spreads_hit(team2), ppg1, ppg2, pace1, pace2, ortg1, ortg2, drtg1, drtg2, drb1, drb2, threePAR1, threePAR2, ts1, ts2, ftr1, ftr2, d_tov1, d_tov2, o_tov1, o_tov2, ftperfga1, ftperfga2, points_over_average_ratio1, points_over_average_ratio2, hotness_ratio1, hotness_ratio2, std_dev1, std_dev2, win_pct1, win_pct2, rsw1, rsw2, rating1, rating2, win_pct_close1, win_pct_close2, sos1, sos2, mov_a_h, mov_a_a, injury_gmsc1, injury_gmsc2, injury_mins1, injury_mins2]
     else: 
         team1 = game['home_team']
