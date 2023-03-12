@@ -272,7 +272,7 @@ def get_player_game_log_current(player, team, season):
     roster = get_roster_excel(team_name_mapping.get(get_city(team), get_city(team)), season)
     bbref_url = None
     for row in range(roster.shape[0]): 
-        if unidecode(roster.at[row, 'Player']) == player or unidecode(roster.at[row, 'Player']) == f'{player} Jr.' or unidecode(roster.at[row, 'Player']) == f'{player} (TW)' or unidecode(roster.at[row, 'Player']) == f'{player} Jr. (TW)' or unidecode(roster.at[row, 'Player']) == f'{player} Sr.' or unidecode(roster.at[row, 'Player']) == f'{player} Sr. (TW)': 
+        if unidecode(roster.at[row, 'Player']) == player or unidecode(roster.at[row, 'Player']) == f'{player} Jr.' or unidecode(roster.at[row, 'Player']) == f'{player} (TW)' or unidecode(roster.at[row, 'Player']) == f'{player} Jr. (TW)' or unidecode(roster.at[row, 'Player']) == f'{player} Sr.' or unidecode(roster.at[row, 'Player']) == f'{player} Sr. (TW)' or unidecode(roster.at[row, 'Player']) == f'{player} II': 
             bbref_url = roster.at[row, 'bbref url']
     if bbref_url == None: 
         raise Exception(f"Failed to find player game log for {player}!")
@@ -818,4 +818,4 @@ else:
     pick_string = f"{away_team}@{home_team} {cover} {pm}{spread_string}"
 print("\n")
 print("Generating tweet... \n")
-run_tweet_gen(pick_string, round(float(pct), 2))
+run_tweet_gen(pick_string, round(float(pct), 2), 'regression')
