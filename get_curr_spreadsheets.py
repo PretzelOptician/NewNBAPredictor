@@ -149,7 +149,7 @@ def get_abbrv(team, year):
     elif team == 'Dallas' or team == 'Dallas Mavericks': return 'DAL'
 
 def get_mov_excel(year): 
-    filepath = f'./movRatings/{year}.xlsx'
+    filepath = f'./mov_ratings/{year}.xlsx'
     df = pd.read_excel(filepath)
     return df
 
@@ -201,7 +201,7 @@ def get_odds():
     return response
 
 def get_rsw_odds_excel(year): 
-    filepath = f'./rswOdds/{year}.xlsx'
+    filepath = f'./rsw_odds/{year}.xlsx'
     df = pd.read_excel(filepath)
     return df
 
@@ -268,11 +268,10 @@ def get_pct_spreads_hit(team):
     return pct
 
 def get_player_game_log_current(player, team, season):
-    # print("team in get_player_game_log: ", team) 
     roster = get_roster_excel(team_name_mapping.get(get_city(team), get_city(team)), season)
     bbref_url = None
     for row in range(roster.shape[0]): 
-        if unidecode(roster.at[row, 'Player']) == player or unidecode(roster.at[row, 'Player']) == f'{player} Jr.' or unidecode(roster.at[row, 'Player']) == f'{player} (TW)' or unidecode(roster.at[row, 'Player']) == f'{player} Jr. (TW)' or unidecode(roster.at[row, 'Player']) == f'{player} Sr.' or unidecode(roster.at[row, 'Player']) == f'{player} Sr. (TW)' or unidecode(roster.at[row, 'Player']) == f'{player} II': 
+        if unidecode(roster.at[row, 'Player']) == player or unidecode(roster.at[row, 'Player']) == f'{player} Jr.' or unidecode(roster.at[row, 'Player']) == f'{player} (TW)' or unidecode(roster.at[row, 'Player']) == f'{player} Jr. (TW)' or unidecode(roster.at[row, 'Player']) == f'{player} Sr.' or unidecode(roster.at[row, 'Player']) == f'{player} Sr. (TW)' or unidecode(roster.at[row, 'Player']) == f'{player} II' or unidecode(roster.at[row, 'Player']) == f'{player} III': 
             bbref_url = roster.at[row, 'bbref url']
     if bbref_url == None: 
         raise Exception(f"Failed to find player game log for {player}!")
@@ -280,7 +279,7 @@ def get_player_game_log_current(player, team, season):
     return get_player_game_log(bbref_url, season)
 
 def get_game_log_excel(team, year): 
-    filepath = f'./gameLogs/{year}/{team}.xlsx'
+    filepath = f'./game_logs/{year}/{team}.xlsx'
     df = pd.read_excel(filepath)
     return df
 

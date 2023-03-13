@@ -57,7 +57,7 @@ def get_acc_score(Y_proba, y_true):
 
 
 # load the training data from a file
-df = pd.read_excel('./total_data.xlsx').fillna(value=0)
+df = pd.read_excel('./historic_data/total_data.xlsx').fillna(value=0)
 
 # extract the binary output variable from the dataframe
 y = df['hitOver'].values
@@ -112,7 +112,7 @@ def run_model(combo, random_state):
     Y_all_predict = model.predict(X)
     df['ml_prob'] = Y_all_predict
 
-    df.to_excel('./total_data.xlsx')
+    df.to_excel('./historic_data/total_data.xlsx')
 
     print('Train: %.3f, Test: %.3f' % (train_acc, test_acc))
 

@@ -1,0 +1,24 @@
+THESE ARE NOTES/PSEUDOCODE FOR A POTENTIAL CUSTOM LOSS FUNCTION FOR THE ML Model
+I could not figure out exactly how to make it work and decided to just use binary_crossentropy for the ML models but I might return to this one day
+
+mean = mean of y_pred
+std_dev = standard deviation of y_pred
+prob = y_pred
+flipped_prob = 1-prob
+threshold = mean + std_dev
+
+over = prob - threshold
+under = flipped_prob - threshold
+
+pred_over = ((over / abs(over))+1)/2
+pred_over_sum = sum of pred_over values
+pred_correct_over = pred_over * y_true
+pred_over_sum_correct = sum of pred_correct_over
+
+pred_under = ((under / abs(under))+1)/2
+pred_under_sum = sum of pred_under values
+pred_correct_under = pred_under * (1-y_true)
+pred_under_sum_correct = sum of pred_correct_under
+
+acc = (pred_correct_under + pred_correct_over) / (pred_over_sum + pred_under_sum)
+loss = 1 - acc
