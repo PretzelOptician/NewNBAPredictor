@@ -1,0 +1,18 @@
+- CONSENSUS TRACKER V1.1
+    - find a way to get historical consensus results
+    - generate a mean and standard deviation for both totals and spread results for z values
+    - rank current consensus picks based on difference from mean, similar to how ML results are done
+    - release! 
+- WEBSITE
+    - generate plan for website structure
+    - gather "test" curr_games spreadsheets (since most of this work will be done during playoffs)
+    - set up website skeleton without data or database set up yet
+    - set up sqlite local database with all the necessary data (including curr_games)
+    - create the views for current predictions
+    - wrap it all together and generate the data on the pages for a working website
+- INTEGRATE JAVA MONTE CARLO SIMULATION
+    - generate historical player stats at different points in season
+    - use to evaluate historical results for model and adapt as needed
+    - integrate to website
+- TESTING
+    - achieve 100% test coverage on the current_games generation!
