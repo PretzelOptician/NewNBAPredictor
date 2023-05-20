@@ -2,7 +2,11 @@
     - find a way to get historical consensus results
     - generate a mean and standard deviation for both totals and spread results for z values
     - rank current consensus picks based on difference from mean, similar to how ML results are done
-    - release! 
+    - release!
+- SIMPLE BUG FIX: fix the multiple jersey number bug (can actually address when downloading the roster in the first place) 
+- GITIGNORE
+    - figure out which files to gitignore
+    - start protecting IP
 - WEBSITE
     - generate plan for website structure
     - gather "test" curr_games spreadsheets (since most of this work will be done during playoffs)

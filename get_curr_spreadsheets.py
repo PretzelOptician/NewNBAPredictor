@@ -82,6 +82,13 @@ def get_ratings(year, team):
             rating1 = df.at[row, col_name]
     return rating1
 
+def is_number(number): 
+    try: 
+        float(number)
+        return True
+    except: 
+        return False
+
 def convert_team_name(team): 
     if team == 'LALakers' or team == 'LA Lakers': return 'Los Angeles Lakers'
     elif team == 'Cleveland': return 'Cleveland Cavaliers'
@@ -271,8 +278,13 @@ def get_player_game_log_current(player, team, season):
     roster = get_roster_excel(team_name_mapping.get(get_city(team), get_city(team)), season)
     bbref_url = None
     for row in range(roster.shape[0]): 
-        if (unidecode(roster.at[row, 'Player']) == player or unidecode(roster.at[row, 'Player']) == f'{player} Jr.' or unidecode(roster.at[row, 'Player']) == f'{player} (TW)' or unidecode(roster.at[row, 'Player']) == f'{player} Jr. (TW)' or unidecode(roster.at[row, 'Player']) == f'{player} Sr.' or unidecode(roster.at[row, 'Player']) == f'{player} Sr. (TW)' or unidecode(roster.at[row, 'Player']) == f'{player} II' or unidecode(roster.at[row, 'Player']) == f'{player} III') and (not math.isnan(roster.at[row, 'No.'])): 
-            bbref_url = roster.at[row, 'bbref url']
+        if(not is_number(roster.at[row, 'No.'])): continue # THIS DOESN'T WORK
+        try: 
+            if (unidecode(roster.at[row, 'Player']) == player or unidecode(roster.at[row, 'Player']) == f'{player} Jr.' or unidecode(roster.at[row, 'Player']) == f'{player} (TW)' or unidecode(roster.at[row, 'Player']) == f'{player} Jr. (TW)' or unidecode(roster.at[row, 'Player']) == f'{player} Sr.' or unidecode(roster.at[row, 'Player']) == f'{player} Sr. (TW)' or unidecode(roster.at[row, 'Player']) == f'{player} II' or unidecode(roster.at[row, 'Player']) == f'{player} III') and (not math.isnan(roster.at[row, 'No.'])): 
+                bbref_url = roster.at[row, 'bbref url']
+        except TypeError: 
+            if (unidecode(roster.at[row, 'Player']) == player or unidecode(roster.at[row, 'Player']) == f'{player} Jr.' or unidecode(roster.at[row, 'Player']) == f'{player} (TW)' or unidecode(roster.at[row, 'Player']) == f'{player} Jr. (TW)' or unidecode(roster.at[row, 'Player']) == f'{player} Sr.' or unidecode(roster.at[row, 'Player']) == f'{player} Sr. (TW)' or unidecode(roster.at[row, 'Player']) == f'{player} II' or unidecode(roster.at[row, 'Player']) == f'{player} III'): 
+                bbref_url = roster.at[row, 'bbref url']
     if bbref_url == None: 
         print(f"WARNING: Failed to find player game log for {player}!")
         return pd.DataFrame()
@@ -713,4 +725,4 @@ def get_current_spreadsheets():
             print(f"NOTE: missing odds for game {team2} at {team1}")
 
     total_data.to_excel('./current_games_total.xlsx')
-    spread_data.to_excel('./current_games_total.xlsx')
+    spread_data.to_excel('./current_games_spread.xlsx')

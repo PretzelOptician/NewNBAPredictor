@@ -14,7 +14,10 @@ mode_functions = {
 def main(mode, notweet=False):
     if mode in mode_functions:
         for func in mode_functions[mode]:
-            func(notweet)
+            if func != get_current_spreadsheets:
+                func(notweet)
+            else: 
+                func()
     else:
         print("Invalid mode selected")
 

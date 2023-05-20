@@ -4,7 +4,6 @@ from tweet_generator import *
 # from injuryv2 import *
 
 def logit_total(df):     
-    #chatGPT code:: 
     # Extract the relevant columns from the dataframe
     X = df[['total', 'size_of_spread', 'pct_overs_hit', 'ortg', 'drtg', 'drb', 'threePAR', 'ts', 'ftr', 'points_over_average_ratio', 'hotness_ratio', 'std_dev']]
     # Add a column of consts to the dataframe to represent the intercept term
@@ -38,6 +37,7 @@ def get_regression_probs(notweet=False):
 
     team_names = [ "Atlanta", "Boston", "Brooklyn", "Charlotte", "Chicago", "Cleveland", "Dallas", "Denver", "Detroit", "Golden State", "Houston", "Indiana", "LA Clippers", "LA Lakers", "Memphis", "Miami", "Milwaukee", "Minnesota", "New Orleans", "New York", "Oklahoma City", "Orlando", "Philadelphia", "Phoenix", "Portland", "Sacramento", "San Antonio", "Toronto", "Utah", "Washington"]
     total_data = pd.read_excel('./current_games_total.xlsx')
+    print(total_data)
     spread_data = pd.read_excel('./current_games_spread.xlsx')
     team_name_mapping = {
         "LALakers": "LA Lakers",
@@ -143,3 +143,4 @@ def get_regression_probs(notweet=False):
         print("\n")
         print("Generating tweet... \n")
         run_tweet_gen(pick_string, round(float(pct), 2), 'regression')
+    print("\n")

@@ -67,6 +67,7 @@ def get_player_profile_url(name, dob):
     elif name == "Juan Carlos Navarro": base_string = "navarju"
     elif name == "Marcus Vinicius": base_string = "vincima"
     elif name == "Mouhamed Sene": base_string = "senesa"
+    elif name == "Justin Manaya":  base_string = "minayju"
     else: base_string = (unidecode(names_list[1][0:5]) + unidecode(names_list[0][0:2])).lower()
     if name == "PJ Hairston" or name == "Markus Howard" or name == "Xavier Munford" or name == "Killian Tillie" or name == "Bobby Jones": 
         url = f"https://www.basketball-reference.com/players/{base_string[0]}/{base_string}02.html"
@@ -120,7 +121,11 @@ def get_player_game_log(bbref_url, season):
     response = requests.get(game_log_url)
     soup = BeautifulSoup(response.content, 'html.parser')
     table = soup.find('table', id='pgl_basic')
-    df = pd.read_html(str(table))[0]
+    try: 
+        df = pd.read_html(str(table))[0]
+    except ValueError: 
+        print(f"WARNING: Failed to find player game log for {player}!")
+        return pd.DataFrame()
     df['Rk_num'] = pd.to_numeric(df['Rk'], errors='coerce')
     df = df[df['Rk_num'].notnull()]
     df = df.reset_index(drop=True)
